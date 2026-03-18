@@ -24,7 +24,7 @@
           </button>
         </div>
         <div class="menu-footer">
-          <span>WASD 飞行 | ↑↓ 油门 | Space 射击 | E 导弹</span>
+          <span>WASD 飞行 | ←→ 滚转 | ↑↓ 油门 | Space 射击 | E 导弹</span>
         </div>
       </div>
     </div>
@@ -37,6 +37,8 @@
       <div class="control-row"><span class="key">S</span><span>俯冲</span></div>
       <div class="control-row"><span class="key">A</span><span>左转</span></div>
       <div class="control-row"><span class="key">D</span><span>右转</span></div>
+      <div class="control-row"><span class="key">←</span><span>左滚转</span></div>
+      <div class="control-row"><span class="key">→</span><span>右滚转</span></div>
       <h3>油门控制：</h3>
       <div class="control-row"><span class="key">↑</span><span>加速（油门+1档）</span></div>
       <div class="control-row"><span class="key">↓</span><span>减速（油门-1档）</span></div>
@@ -50,6 +52,8 @@
       <div class="control-row"><span class="key">N</span><span>生成敌机</span></div>
       <div class="control-row"><span class="key">R</span><span>重生</span></div>
       <div class="control-row"><span class="key">Tab</span><span>排行榜</span></div>
+      <div class="control-row"><span class="key">ESC</span><span>设置菜单</span></div>
+      <div class="control-row"><span class="key">F3</span><span>调试面板</span></div>
       <p class="close-hint">点击此面板关闭</p>
     </div>
 
@@ -60,7 +64,7 @@
         <div class="hud-info-item">
           <span class="hud-label">SPD</span>
           <span class="hud-value" id="hud-speed">0</span>
-          <span class="hud-unit">km/h</span>
+          <span class="hud-unit">%</span>
         </div>
         <div class="hud-info-item">
           <span class="hud-label">ALT</span>
@@ -70,6 +74,10 @@
         <div class="hud-info-item">
           <span class="hud-label">THR</span>
           <span class="hud-value" id="hud-throttle">50%</span>
+        </div>
+        <div class="hud-info-item">
+          <span class="hud-label">WAVE</span>
+          <span class="hud-value" id="hud-wave">1</span>
         </div>
       </div>
 
@@ -82,6 +90,10 @@
         <div class="hud-ammo-item">
           <span class="hud-ammo-icon">✦</span>
           <span class="hud-ammo-value" id="hud-flares">4</span>
+        </div>
+        <div class="hud-ammo-item enemy-count">
+          <span class="hud-ammo-icon">🎯</span>
+          <span class="hud-ammo-value" id="hud-enemies">0</span>
         </div>
       </div>
 
@@ -141,12 +153,76 @@
       </div>
     </div>
 
+    <!-- 排行榜 -->
+    <div id="leaderboard-overlay" style="display:none;">
+      <div class="leaderboard-panel">
+        <h2 class="leaderboard-title">LEADERBOARD</h2>
+        <table class="leaderboard-table">
+          <thead>
+            <tr>
+              <th>RANK</th>
+              <th>PILOT</th>
+              <th>KILLS</th>
+              <th>DEATHS</th>
+              <th>K/D</th>
+              <th>TIME</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 设置菜单 -->
+    <div id="settings-menu" style="display:none;">
+      <div class="settings-panel">
+        <h2 class="settings-title">SETTINGS</h2>
+        <div class="settings-group">
+          <label class="settings-label">画质 Quality</label>
+          <div class="settings-buttons">
+            <button id="settings-quality-low" class="settings-btn">LOW</button>
+            <button id="settings-quality-medium" class="settings-btn">MEDIUM</button>
+            <button id="settings-quality-high" class="settings-btn active">HIGH</button>
+          </div>
+        </div>
+        <div class="settings-group">
+          <label class="settings-label">Y 轴反转 Invert Y</label>
+          <button id="settings-invert-y" class="settings-btn toggle-btn">关闭</button>
+        </div>
+        <div class="settings-group">
+          <label class="settings-label">音效 Sound</label>
+          <button id="settings-sound" class="settings-btn toggle-btn active">开启</button>
+        </div>
+        <button id="settings-close" class="settings-btn close-btn">关闭设置 (ESC)</button>
+      </div>
+    </div>
+
+    <!-- 调试面板 -->
+    <div id="debug-panel" style="display:none;">
+      <div class="debug-header">DEBUG PERFORMANCE <span class="debug-hint">F3 to toggle</span></div>
+      <div id="debug-content"></div>
+    </div>
+
     <!-- 通知容器 -->
     <div id="notifications-container"></div>
 
     <!-- 音频控制 -->
     <button id="audio-enabler" style="display:none;">Click to Enable Audio</button>
     <button id="sound-toggle" style="display:none;">🔊 (M)</button>
+
+    <!-- 移动端控制 -->
+    <div id="mobile-joystick" style="display:none;">
+      <div class="joystick-base">
+        <div class="joystick-handle"></div>
+      </div>
+    </div>
+    <div id="mobile-throttle" style="display:none;">
+      <div class="throttle-track"></div>
+      <div class="throttle-handle"></div>
+      <div class="throttle-label">THR</div>
+    </div>
+    <div id="mobile-fire" style="display:none;">FIRE</div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

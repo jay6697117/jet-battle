@@ -3,6 +3,7 @@ import { CONFIG } from '../utils/Config.js';
 /**
  * HUD 更新系统
  * 每帧更新所有 HUD 元素的显示内容
+ * 支持波次显示、敌机计数、速度百分比
  */
 export class HUDSystem {
   constructor(player) {
@@ -13,8 +14,10 @@ export class HUDSystem {
       speed: document.getElementById('hud-speed'),
       altitude: document.getElementById('hud-altitude'),
       throttle: document.getElementById('hud-throttle'),
+      wave: document.getElementById('hud-wave'),
       missiles: document.getElementById('hud-missiles'),
       flares: document.getElementById('hud-flares'),
+      enemies: document.getElementById('hud-enemies'),
       healthBar: document.getElementById('hud-health-bar'),
       healthValue: document.getElementById('hud-health-value'),
       heatBar: document.getElementById('hud-heat-bar'),
@@ -27,13 +30,15 @@ export class HUDSystem {
   /**
    * 每帧更新
    */
-  update(dt) {
+  update(dt, waveSystem) {
     const p = this.player;
     const els = this.els;
 
-    // 速度 (显示为 km/h 的概念数值)
+    // 速度（百分比显示）
     if (els.speed) {
-      els.speed.textContent = Math.round(p.speed * 10);
+      const maxSpeed = CONFIG.flight.maxSpeed;
+      const percent = Math.round((p.speed / maxSpeed) * 100);
+      els.speed.textContent = percent;
     }
 
     // 海拔
@@ -47,6 +52,11 @@ export class HUDSystem {
       els.throttle.textContent = Math.round(percent) + '%';
     }
 
+    // 波次
+    if (els.wave && waveSystem) {
+      els.wave.textContent = waveSystem.currentWave;
+    }
+
     // 导弹数
     if (els.missiles) {
       els.missiles.textContent = p.missiles;
@@ -57,12 +67,16 @@ export class HUDSystem {
       els.flares.textContent = p.flares;
     }
 
+    // 敌机存活数
+    if (els.enemies && waveSystem) {
+      const info = waveSystem.getInfo();
+      els.enemies.textContent = info.enemiesAlive;
+    }
+
     // 血量条
     if (els.healthBar) {
       const hp = (p.health / CONFIG.player.maxHealth) * 100;
       els.healthBar.style.width = hp + '%';
-
-      // 低血量变红
       if (hp < 30) {
         els.healthBar.style.background = 'linear-gradient(90deg, #ff4444, #ff0000)';
       } else {
@@ -76,7 +90,6 @@ export class HUDSystem {
     // 热度条
     if (els.heatBar) {
       els.heatBar.style.width = p.heat + '%';
-      // 过热闪烁
       if (p.isOverheated) {
         els.heatBar.classList.add('overheated');
       } else {

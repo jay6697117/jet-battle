@@ -10,10 +10,12 @@ import { Flare } from '../entities/Flare.js';
  * 管理机枪射击、导弹发射、干扰弹释放
  */
 export class WeaponSystem {
-  constructor(player, keyboard, scene) {
+  constructor(player, keyboard, scene, touchInput) {
     this.player = player;
     this.keyboard = keyboard;
     this.scene = scene;
+    this.touchInput = touchInput;
+    this.aiSystem = null; // 由 main.js 设置，用于自动锁定敌机
 
     // 子弹池
     this.bullets = [];
@@ -31,7 +33,7 @@ export class WeaponSystem {
     this.lockProgress = 0; // 0-1
     this.isLocked = false;
 
-    // 音频回调（后续 Task 实现）
+    // 音频回调
     this.onGunFire = null;
     this.onMissileLaunch = null;
     this.onFlareRelease = null;
@@ -57,14 +59,18 @@ export class WeaponSystem {
       p.heat = clamp(p.heat - gc.cooldownRate * dt, 0, 100);
     }
 
-    // === 机枪射击 ===
+    // === 机枪射击（键盘 Space 或触摸射击按钮） ===
     this._gunTimer -= dt;
-    if (kb.isPressed('Space') && !p.isOverheated && this._gunTimer <= 0) {
+    const wantFire = kb.isPressed('Space') || (this.touchInput && this.touchInput.isFiring);
+    if (wantFire && !p.isOverheated && this._gunTimer <= 0) {
       this._fireGun();
       this._gunTimer = this._gunInterval;
     }
 
-    // === 导弹发射 ===
+    // === 更新自动锁定 ===
+    this._updateAutoLock(dt);
+
+    // === 导弹发射（自动锁定最近敌机） ===
     if (kb.isJustPressed('KeyE') && p.missiles > 0) {
       this._fireMissile();
     }
@@ -76,6 +82,63 @@ export class WeaponSystem {
 
     // === 更新所有弹药 ===
     this._updateProjectiles(dt);
+  }
+
+  /**
+   * 自动锁定最近敌机（现代导弹火控雷达模拟）
+   */
+  _updateAutoLock(dt) {
+    if (!this.aiSystem) return;
+
+    const mc = CONFIG.weapons.missile;
+    const playerPos = this.player.mesh.position;
+    const playerForward = this.player.getForward();
+    const enemies = this.aiSystem.getAliveEnemies();
+
+    let bestTarget = null;
+    let bestScore = -1;
+
+    for (const enemy of enemies) {
+      const toEnemy = new THREE.Vector3().subVectors(enemy.mesh.position, playerPos);
+      const dist = toEnemy.length();
+
+      // 距离过远跳过
+      if (dist > mc.lockRange) continue;
+
+      // 计算与玩家前方的角度
+      toEnemy.normalize();
+      const angle = Math.acos(clamp(playerForward.dot(toEnemy), -1, 1));
+
+      // 锁定角度范围内
+      if (angle > mc.lockAngle) continue;
+
+      // 评分：距离越近 + 角度越小 = 分数越高
+      const distScore = 1 - (dist / mc.lockRange);
+      const angleScore = 1 - (angle / mc.lockAngle);
+      const score = distScore * 0.3 + angleScore * 0.7;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestTarget = enemy;
+      }
+    }
+
+    // 更新锁定状态
+    if (bestTarget) {
+      if (this.lockTarget === bestTarget) {
+        // 继续锁定同一目标
+        this.lockProgress = Math.min(this.lockProgress + dt / mc.lockTime, 1);
+      } else {
+        // 切换目标，重置进度
+        this.lockTarget = bestTarget;
+        this.lockProgress = 0;
+      }
+      this.isLocked = this.lockProgress >= 1;
+    } else {
+      this.lockTarget = null;
+      this.lockProgress = 0;
+      this.isLocked = false;
+    }
   }
 
   /**
@@ -116,7 +179,7 @@ export class WeaponSystem {
   }
 
   /**
-   * 发射导弹
+   * 发射导弹 — 自动锁定最近敌机
    */
   _fireMissile() {
     const p = this.player;
@@ -125,8 +188,25 @@ export class WeaponSystem {
     const forward = p.getForward();
     const spawnPos = p.mesh.position.clone().add(forward.clone().multiplyScalar(8));
 
-    // 导弹指向当前锁定目标（如果有的话）
-    const missile = new Missile(spawnPos, forward, this.lockTarget, 'player');
+    // 如果已锁定目标，导弹追踪该目标
+    // 如果未锁定，自动选择最近的敌机作为目标
+    let target = null;
+    if (this.isLocked && this.lockTarget) {
+      target = this.lockTarget;
+    } else if (this.aiSystem) {
+      // 找最近的敌机
+      const enemies = this.aiSystem.getAliveEnemies();
+      let minDist = Infinity;
+      for (const e of enemies) {
+        const d = e.mesh.position.distanceTo(p.mesh.position);
+        if (d < minDist) {
+          minDist = d;
+          target = e;
+        }
+      }
+    }
+
+    const missile = new Missile(spawnPos, forward, target, 'player');
     this.missiles.push(missile);
     this.scene.add(missile.mesh);
 

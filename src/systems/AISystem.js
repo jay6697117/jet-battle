@@ -216,10 +216,11 @@ export class AISystem {
     toPlayer.subVectors(player.mesh.position, spawnPos).normalize();
 
     // 混合前方和指向玩家的方向（模拟瞄准误差）
-    const dir = forward.clone().lerp(toPlayer, 0.8);
-    dir.x += (Math.random() - 0.5) * 0.1;
-    dir.y += (Math.random() - 0.5) * 0.1;
-    dir.z += (Math.random() - 0.5) * 0.1;
+    const dir = forward.clone().lerp(toPlayer, 0.6); // 降低瞄准精度
+    const spread = CONFIG.enemy.accuracy || 0.08;
+    dir.x += (Math.random() - 0.5) * spread;
+    dir.y += (Math.random() - 0.5) * spread;
+    dir.z += (Math.random() - 0.5) * spread;
     dir.normalize();
 
     const bullet = new Bullet(spawnPos, dir, 'enemy');

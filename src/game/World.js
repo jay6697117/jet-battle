@@ -1,10 +1,11 @@
 import * as THREE from 'three';
 import { CONFIG } from '../utils/Config.js';
 import { randFloat } from '../utils/MathUtils.js';
+import { Terrain } from './Terrain.js';
 
 /**
  * 世界/场景管理
- * 负责创建天空、地面、光照、云层、雾效
+ * 负责创建天空、地面、光照、云层、雾效、地形
  */
 export class World {
   constructor(scene) {
@@ -12,11 +13,13 @@ export class World {
     this.clouds = [];
 
     this._createSky();
-    this._createGround();
     this._createOcean();
     this._createLighting();
     this._createFog();
     this._createClouds();
+
+    // 丰富地形（沙漠、山地、森林、草地、湖泊、建筑）
+    this.terrain = new Terrain(scene);
   }
 
   /**
@@ -58,25 +61,6 @@ export class World {
     const sky = new THREE.Mesh(skyGeo, skyMat);
     this.scene.add(sky);
     this.sky = sky;
-  }
-
-  /**
-   * 创建地面网格
-   */
-  _createGround() {
-    const size = CONFIG.world.groundSize;
-    // 简单的大平面作为陆地参考
-    const groundGeo = new THREE.PlaneGeometry(size, size, 1, 1);
-    const groundMat = new THREE.MeshStandardMaterial({
-      color: 0x2d5016,
-      roughness: 0.9,
-      metalness: 0.0,
-    });
-    const ground = new THREE.Mesh(groundGeo, groundMat);
-    ground.rotation.x = -Math.PI / 2;
-    ground.position.y = -5; // 地面稍微低于海平面
-    ground.receiveShadow = true;
-    this.scene.add(ground);
   }
 
   /**
@@ -198,6 +182,11 @@ export class World {
         positions.setY(i, y);
       }
       positions.needsUpdate = true;
+    }
+
+    // 地形更新
+    if (this.terrain) {
+      this.terrain.update(dt, elapsed);
     }
   }
 }

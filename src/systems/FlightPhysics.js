@@ -5,15 +5,19 @@ import { clamp, lerp } from '../utils/MathUtils.js';
 /**
  * 飞行物理系统
  * 根据输入更新战斗机姿态和位置
+ * 支持滚转控制 + 触摸输入 + Y 轴反转
  */
 export class FlightPhysics {
-  constructor(player, keyboard) {
+  constructor(player, keyboard, touchInput, settingsManager) {
     this.player = player;
     this.keyboard = keyboard;
+    this.touchInput = touchInput;
+    this.settingsManager = settingsManager;
 
-    // 内部旋转状态（欧拉角不直接用于输入，用四元数）
+    // 内部旋转状态
     this._pitchInput = 0;
     this._yawInput = 0;
+    this._rollInput = 0;
     this._rollAmount = 0;
 
     // Boost 冷却计时
@@ -31,6 +35,8 @@ export class FlightPhysics {
     const kb = this.keyboard;
     const fc = CONFIG.flight;
     const bc = CONFIG.boost;
+    const touch = this.touchInput;
+    const invertY = this.settingsManager?.settings?.invertY || false;
 
     // === 1. 油门控制 ===
     if (kb.isJustPressed('ArrowUp')) {
@@ -40,15 +46,20 @@ export class FlightPhysics {
       player.throttleIndex = clamp(player.throttleIndex - 1, 0, 4);
     }
 
+    // 移动端油门
+    if (touch && touch.isMobile) {
+      player.throttleIndex = Math.round(touch.throttle * 4);
+    }
+
     // Boost
-    const wantBoost = kb.isPressed('ShiftLeft') || kb.isPressed('ShiftRight');
+    const wantBoost = kb.isPressed('ShiftLeft') || kb.isPressed('ShiftRight') ||
+                      (touch && touch.isBoosting);
     if (wantBoost && player.boostEnergy > 0) {
       player.isBoosting = true;
       player.boostEnergy = clamp(player.boostEnergy - bc.consumeRate * dt, 0, 100);
       this._boostCooldown = bc.rechargeDelay;
     } else {
       player.isBoosting = false;
-      // Boost 恢复
       if (this._boostCooldown > 0) {
         this._boostCooldown -= dt;
       } else {
@@ -75,14 +86,26 @@ export class FlightPhysics {
     // === 3. 失速检测 ===
     this.isStalling = player.speed < fc.stallSpeed;
 
-    // === 4. 姿态控制（俯仰 + 偏航） ===
+    // === 4. 姿态控制（俯仰 + 偏航 + 滚转） ===
     this._pitchInput = 0;
     this._yawInput = 0;
+    this._rollInput = 0;
 
-    if (kb.isPressed('KeyW')) this._pitchInput = 1;   // 抬头（爬升）
-    if (kb.isPressed('KeyS')) this._pitchInput = -1;  // 低头（俯冲）
-    if (kb.isPressed('KeyA')) this._yawInput = 1;     // 左转
-    if (kb.isPressed('KeyD')) this._yawInput = -1;    // 右转
+    // 键盘输入
+    if (kb.isPressed('KeyW')) this._pitchInput = invertY ? -1 : 1;
+    if (kb.isPressed('KeyS')) this._pitchInput = invertY ? 1 : -1;
+    if (kb.isPressed('KeyA')) this._yawInput = 1;
+    if (kb.isPressed('KeyD')) this._yawInput = -1;
+
+    // ← → 滚转控制
+    if (kb.isPressed('ArrowLeft')) this._rollInput = 1;
+    if (kb.isPressed('ArrowRight')) this._rollInput = -1;
+
+    // 移动端触摸输入
+    if (touch && touch.isMobile) {
+      this._yawInput = -touch.stickX;
+      this._pitchInput = invertY ? -touch.stickY : touch.stickY;
+    }
 
     // 自动稳定（F 键）
     if (kb.isPressed('KeyF')) {
@@ -97,28 +120,23 @@ export class FlightPhysics {
     // 应用旋转 — 使用四元数防止万向锁
     const pitchQ = new THREE.Quaternion();
     const yawQ = new THREE.Quaternion();
+    const rollQ = new THREE.Quaternion();
     const localRight = player.getRight();
     const localUp = player.getUp();
+    const localForward = player.getForward();
 
     pitchQ.setFromAxisAngle(localRight, this._pitchInput * fc.pitchSpeed * dt);
     yawQ.setFromAxisAngle(localUp, this._yawInput * fc.yawSpeed * dt);
+    rollQ.setFromAxisAngle(localForward, this._rollInput * fc.rollSpeed * dt);
 
     player.mesh.quaternion.premultiply(pitchQ);
     player.mesh.quaternion.premultiply(yawQ);
+    player.mesh.quaternion.premultiply(rollQ);
     player.mesh.quaternion.normalize();
 
     // === 5. 自动倾斜（视觉效果） ===
-    // 转弯时飞机自动倾斜，松手回正
     const targetRoll = -this._yawInput * fc.maxRollAngle;
     this._rollAmount = lerp(this._rollAmount, targetRoll, fc.rollSpeed * dt);
-
-    // 将倾斜角应用为绕前方轴的旋转
-    const rollQ = new THREE.Quaternion();
-    const forwardDir = player.getForward();
-    rollQ.setFromAxisAngle(forwardDir, this._rollAmount);
-
-    // 先移除旧 roll，应用新 roll（简化方式：直接覆盖）
-    // 实际使用中，roll 作为额外视觉层叠加
 
     // === 6. 位移 ===
     const moveForward = player.getForward();
@@ -128,7 +146,6 @@ export class FlightPhysics {
     // 防止飞到地下
     if (player.mesh.position.y < 5) {
       player.mesh.position.y = 5;
-      // 如果朝下飞到地面附近，强制拉起
       if (forward.y < 0) {
         this._pitchInput = 0.5;
       }
@@ -146,14 +163,9 @@ export class FlightPhysics {
   _autoStabilize(dt) {
     const player = this.player;
     const stab = CONFIG.flight.stabilizationSpeed;
-
-    // 获取当前欧拉角
     const euler = new THREE.Euler().setFromQuaternion(player.mesh.quaternion, 'YXZ');
-
-    // 缓慢将 pitch 和 roll 归零
     euler.x = lerp(euler.x, 0, stab * dt);
     euler.z = lerp(euler.z, 0, stab * dt);
-
     player.mesh.quaternion.setFromEuler(euler);
   }
 }

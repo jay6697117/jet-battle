@@ -37,7 +37,7 @@ export class Game {
    * 初始化 WebGL 渲染器
    */
   _initRenderer() {
-    const quality = CONFIG.quality.medium; // 默认中等画质
+    const quality = CONFIG.quality.high; // 默认高画质
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: quality.antialias,

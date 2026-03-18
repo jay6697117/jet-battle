@@ -4,6 +4,7 @@ import { GameState } from './game/GameState.js';
 import { PlayerJet } from './entities/PlayerJet.js';
 import { KeyboardInput } from './input/KeyboardInput.js';
 import { MouseInput } from './input/MouseInput.js';
+import { TouchInput } from './input/TouchInput.js';
 import { FlightPhysics } from './systems/FlightPhysics.js';
 import { CameraSystem } from './systems/CameraSystem.js';
 import { HUDSystem } from './systems/HUDSystem.js';
@@ -13,7 +14,10 @@ import { CollisionSystem } from './systems/CollisionSystem.js';
 import { RadarSystem } from './systems/RadarSystem.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { ScreenEffects } from './systems/ScreenEffects.js';
+import { WaveSystem } from './systems/WaveSystem.js';
+import { DebugPanel } from './systems/DebugPanel.js';
 import { AudioManager } from './audio/AudioManager.js';
+import { SettingsManager } from './game/SettingsManager.js';
 import { CONFIG } from './utils/Config.js';
 
 /**
@@ -26,6 +30,7 @@ let gameState = null;
 let player = null;
 let keyboard = null;
 let mouse = null;
+let touchInput = null;
 let flightPhysics = null;
 let cameraSystem = null;
 let hudSystem = null;
@@ -35,7 +40,10 @@ let collisionSystem = null;
 let radarSystem = null;
 let particleSystem = null;
 let screenEffects = null;
+let waveSystem = null;
+let debugPanel = null;
 let audioManager = null;
+let settingsManager = null;
 
 // 尾迹计时器
 let _trailTimer = 0;
@@ -51,11 +59,17 @@ function init() {
   // 创建音效管理器（在游戏启动前就绑定按钮）
   audioManager = new AudioManager();
 
+  // 创建设置管理器
+  settingsManager = new SettingsManager(game, audioManager);
+
   // 先启动渲染循环显示背景场景
   game.start();
 
   // 绑定主菜单事件
   setupMainMenu();
+
+  // 绑定全局快捷键
+  setupGlobalKeys();
 }
 
 /**
@@ -96,6 +110,22 @@ function setupMainMenu() {
 }
 
 /**
+ * 设置全局快捷键（ESC 设置菜单等）
+ */
+function setupGlobalKeys() {
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Escape' && settingsManager) {
+      settingsManager.toggle();
+    }
+    // TAB 键排行榜
+    if (e.code === 'Tab' && gameState) {
+      e.preventDefault();
+      gameState.toggleLeaderboard();
+    }
+  });
+}
+
+/**
  * 开始游戏
  */
 function startGame() {
@@ -106,9 +136,10 @@ function startGame() {
   // 创建输入系统
   keyboard = new KeyboardInput();
   mouse = new MouseInput();
+  touchInput = new TouchInput();
 
   // 创建飞行物理系统
-  flightPhysics = new FlightPhysics(player, keyboard);
+  flightPhysics = new FlightPhysics(player, keyboard, touchInput, settingsManager);
 
   // 创建相机跟随系统
   cameraSystem = new CameraSystem(game.camera, player, game);
@@ -117,10 +148,13 @@ function startGame() {
   hudSystem = new HUDSystem(player);
 
   // 创建武器系统
-  weaponSystem = new WeaponSystem(player, keyboard, game.scene);
+  weaponSystem = new WeaponSystem(player, keyboard, game.scene, touchInput);
 
   // 创建 AI 系统
   aiSystem = new AISystem(game.scene, player, weaponSystem);
+
+  // 绑定 AI 系统到武器系统（用于导弹自动锁定）
+  weaponSystem.aiSystem = aiSystem;
 
   // 创建碰撞检测系统
   collisionSystem = new CollisionSystem(player, aiSystem, weaponSystem, gameState);
@@ -131,8 +165,14 @@ function startGame() {
   // 创建粒子系统
   particleSystem = new ParticleSystem(game.scene);
 
-  // 创建屏幕效果
+  // 创建屏幕效果（增强版）
   screenEffects = new ScreenEffects();
+
+  // 创建波次系统
+  waveSystem = new WaveSystem(aiSystem, screenEffects);
+
+  // 创建调试面板
+  debugPanel = new DebugPanel(game, aiSystem, waveSystem);
 
   // === 事件回调绑定 ===
 
@@ -141,11 +181,11 @@ function startGame() {
   weaponSystem.onMissileLaunch = () => audioManager.playMissileLaunch();
   weaponSystem.onFlareRelease = () => audioManager.playFlare();
 
-  // 敌机被击杀 → 爆炸特效 + 音效 + 屏幕闪绿
+  // 敌机被击杀 → 爆炸特效 + 音效 + 屏幕闪绿 + 击杀计数
   collisionSystem.onEnemyKilled = (pos) => {
     particleSystem.createExplosion(pos, 1.5);
     audioManager.playExplosion();
-    screenEffects.flashKill();
+    screenEffects.flashKill(gameState.kills);
     gameState.showNotification('击落敌机！');
   };
 
@@ -156,16 +196,17 @@ function startGame() {
     screenEffects.flashDamage();
   };
 
-  // 玩家被击杀 → 爆炸 + 死亡效果
+  // 玩家被击杀 → 爆炸 + 慢动作 + 死亡屏幕
   collisionSystem.onPlayerKilled = (pos) => {
     particleSystem.createExplosion(pos, 2.0);
     audioManager.playExplosion();
     screenEffects.showDeath();
+    game.timeScale = 0.3; // 慢动作效果
     gameState.showNotification('你被击落了！按 R 重生');
   };
 
-  // 开局生成一波敌机
-  aiSystem.spawnWave(3);
+  // 启动波次系统（替代手动 spawnWave）
+  waveSystem.start();
 
   // 启动引擎音效
   audioManager.startEngineLoop();
@@ -208,7 +249,7 @@ function startGame() {
       cameraSystem.update(dt);
 
       // 10. HUD 更新
-      hudSystem.update(dt);
+      hudSystem.update(dt, waveSystem);
 
       // 11. 雷达更新
       radarSystem.update(dt);
@@ -220,10 +261,16 @@ function startGame() {
       // 13. 游戏状态更新
       gameState.update(dt);
 
-      // 14. 重置鼠标 delta
+      // 14. 波次系统更新
+      waveSystem.update(dt);
+
+      // 15. 调试面板更新
+      debugPanel.update(dt);
+
+      // 16. 重置鼠标 delta
       mouse.update();
 
-      // 15. 快捷键处理
+      // 17. 快捷键处理
       handleHotkeys();
     }
   });
@@ -239,9 +286,11 @@ function handleHotkeys() {
   if (keyboard.isJustPressed('KeyR') && player) {
     player.respawn();
     gameState.respawn();
+    game.timeScale = 1.0; // 恢复正常速度
+    if (screenEffects) screenEffects.showRespawn();
   }
 
-  // N 键生成敌机
+  // N 键生成敌机（调试用）
   if (keyboard.isJustPressed('KeyN') && aiSystem) {
     const count = aiSystem.spawnWave();
     console.log(`[Jet Battle] 生成 ${count} 架敌机！`);

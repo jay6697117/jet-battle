@@ -49,16 +49,17 @@ export const CONFIG = {
       cooldownRate: 5, // 每秒冷却百分比
       overheatLockTime: 3.0, // 过热锁定时间（秒）
     },
-    // 导弹
+    // 导弹（制导型，类似现代空空导弹）
     missile: {
-      maxCount: 6, // 每局最大数量
-      speed: 180, // 导弹速度
-      turnRate: 3.0, // 导弹转向速率
-      damage: 50, // 命中伤害
-      lockTime: 2.0, // 锁定所需时间（秒）
-      lockAngle: Math.PI / 3, // 锁定锥角 (60°)
-      lockRange: 2000, // 锁定最大距离
-      maxLifetime: 8.0, // 导弹最大生命时间
+      maxCount: 8, // 每局最大数量
+      speed: 200, // 导弹速度（比敌机快得多）
+      turnRate: 5.0, // 导弹转向速率（高追踪能力）
+      damage: 60, // 命中伤害（一发击杀）
+      lockTime: 1.0, // 锁定所需时间（快速锁定）
+      lockAngle: Math.PI / 2, // 锁定锥角 (90°，更宽广)
+      lockRange: 2500, // 锁定最大距离
+      maxLifetime: 12.0, // 导弹最大存活时间（更持久追踪）
+      leadFactor: 0.8, // 预判拦截系数
     },
     // 干扰弹
     flare: {
@@ -74,15 +75,17 @@ export const CONFIG = {
     respawnDelay: 2.0, // 死亡后重生延迟（秒）
   },
 
-  // AI 敌机
+  // AI 敌机（已削弱）
   enemy: {
-    maxHealth: 60,
-    speed: 50,
-    fireRate: 3, // 每秒射速
-    detectionRange: 500, // 检测玩家的距离
-    attackRange: 300, // 开火距离
-    spawnCount: 5, // 按 N 一次生成的数量
-    spawnRadius: 400, // 生成半径
+    maxHealth: 30, // 血量降低，更容易击杀
+    speed: 40, // 速度降低
+    fireRate: 1.5, // 射速大幅降低
+    detectionRange: 250, // 检测范围缩小
+    attackRange: 150, // 攻击范围缩小
+    spawnCount: 3, // 每次生成数量减少
+    spawnRadius: 500, // 生成半径增大（更分散）
+    bulletDamage: 3, // 子弹伤害降低
+    accuracy: 0.08, // 射击散布增大（准度降低）
   },
 
   // 相机
