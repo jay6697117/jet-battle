@@ -7,6 +7,7 @@ import { MouseInput } from './input/MouseInput.js';
 import { FlightPhysics } from './systems/FlightPhysics.js';
 import { CameraSystem } from './systems/CameraSystem.js';
 import { HUDSystem } from './systems/HUDSystem.js';
+import { WeaponSystem } from './systems/WeaponSystem.js';
 
 /**
  * Jet Battle — 主入口
@@ -21,6 +22,7 @@ let mouse = null;
 let flightPhysics = null;
 let cameraSystem = null;
 let hudSystem = null;
+let weaponSystem = null;
 
 /**
  * 初始化游戏
@@ -95,6 +97,9 @@ function startGame() {
   // 创建 HUD 系统
   hudSystem = new HUDSystem(player);
 
+  // 创建武器系统
+  weaponSystem = new WeaponSystem(player, keyboard, game.scene);
+
   // 注册更新循环
   // 使用自定义系统包装器，按正确顺序更新
   game.addSystem({
@@ -105,23 +110,26 @@ function startGame() {
       // 2. 飞行物理
       flightPhysics.update(dt);
 
-      // 3. 玩家自身更新（喷口发光等）
+      // 3. 武器系统
+      weaponSystem.update(dt);
+
+      // 4. 玩家自身更新（喷口发光等）
       player.update(dt, elapsed);
 
-      // 4. 相机跟随
+      // 5. 相机跟随
       cameraSystem.handleMouseInput(mouse);
       cameraSystem.update(dt);
 
-      // 5. HUD 更新
+      // 6. HUD 更新
       hudSystem.update(dt);
 
-      // 6. 游戏状态更新
+      // 7. 游戏状态更新
       gameState.update(dt);
 
-      // 7. 重置鼠标 delta
+      // 8. 重置鼠标 delta
       mouse.update();
 
-      // 8. 快捷键处理
+      // 9. 快捷键处理
       handleHotkeys();
     }
   });
