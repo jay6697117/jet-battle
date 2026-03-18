@@ -70,6 +70,13 @@ export class GameState {
   }
 
   /**
+   * 公开的通知方法（供外部调用）
+   */
+  showNotification(text) {
+    this._showNotification(text);
+  }
+
+  /**
    * 显示通知
    */
   _showNotification(text) {
