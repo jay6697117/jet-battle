@@ -23,7 +23,8 @@ html, body {
   touch-action: none;
 }
 
-canvas {
+/* Three.js 渲染 canvas（直接插入到 body 下） */
+body > canvas {
   display: block;
   position: fixed;
   top: 0;
