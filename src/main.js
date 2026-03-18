@@ -8,6 +8,8 @@ import { FlightPhysics } from './systems/FlightPhysics.js';
 import { CameraSystem } from './systems/CameraSystem.js';
 import { HUDSystem } from './systems/HUDSystem.js';
 import { WeaponSystem } from './systems/WeaponSystem.js';
+import { AISystem } from './systems/AISystem.js';
+import { CollisionSystem } from './systems/CollisionSystem.js';
 
 /**
  * Jet Battle — 主入口
@@ -23,6 +25,8 @@ let flightPhysics = null;
 let cameraSystem = null;
 let hudSystem = null;
 let weaponSystem = null;
+let aiSystem = null;
+let collisionSystem = null;
 
 /**
  * 初始化游戏
@@ -100,6 +104,21 @@ function startGame() {
   // 创建武器系统
   weaponSystem = new WeaponSystem(player, keyboard, game.scene);
 
+  // 创建 AI 系统
+  aiSystem = new AISystem(game.scene, player, weaponSystem);
+
+  // 创建碰撞检测系统
+  collisionSystem = new CollisionSystem(player, aiSystem, weaponSystem, gameState);
+  collisionSystem.onEnemyKilled = (pos) => {
+    console.log('[Jet Battle] 击落敌机！');
+  };
+  collisionSystem.onPlayerHit = () => {
+    // 后续添加报警音效/屏幕闪红
+  };
+
+  // 开局生成一波敌机
+  aiSystem.spawnWave(3);
+
   // 注册更新循环
   // 使用自定义系统包装器，按正确顺序更新
   game.addSystem({
@@ -116,20 +135,26 @@ function startGame() {
       // 4. 玩家自身更新（喷口发光等）
       player.update(dt, elapsed);
 
-      // 5. 相机跟随
+      // 5. AI 敌机更新
+      aiSystem.update(dt);
+
+      // 6. 碰撞检测
+      collisionSystem.update(dt);
+
+      // 7. 相机跟随
       cameraSystem.handleMouseInput(mouse);
       cameraSystem.update(dt);
 
-      // 6. HUD 更新
+      // 8. HUD 更新
       hudSystem.update(dt);
 
-      // 7. 游戏状态更新
+      // 9. 游戏状态更新
       gameState.update(dt);
 
-      // 8. 重置鼠标 delta
+      // 10. 重置鼠标 delta
       mouse.update();
 
-      // 9. 快捷键处理
+      // 11. 快捷键处理
       handleHotkeys();
     }
   });
@@ -147,9 +172,10 @@ function handleHotkeys() {
     gameState.respawn();
   }
 
-  // N 键生成敌机（后续 Task 实现）
-  if (keyboard.isJustPressed('KeyN')) {
-    console.log('[Jet Battle] 生成敌机功能将在 Task 9-10 实现');
+  // N 键生成敌机
+  if (keyboard.isJustPressed('KeyN') && aiSystem) {
+    const count = aiSystem.spawnWave();
+    console.log(`[Jet Battle] 生成 ${count} 架敌机！`);
   }
 }
 
