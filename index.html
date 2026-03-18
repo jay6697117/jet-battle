@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Jet Battle — 现代喷气机空战</title>
+    <meta name="description" content="Jet Battle - 一款基于 Three.js 的现代喷气机 3D 空战游戏，支持桌面和移动端" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Teko:wght@400;500;600;700&family=Orbitron:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <!-- 主菜单 -->
+    <div id="main-menu">
+      <div class="menu-content">
+        <h1 class="menu-title">JET BATTLE</h1>
+        <p class="menu-subtitle">MODERN AIR COMBAT</p>
+        <div class="menu-buttons">
+          <button id="btn-solo" class="menu-btn menu-btn-primary">
+            <span class="btn-icon">✈</span>
+            <span class="btn-text">SOLO MISSION</span>
+            <span class="btn-desc">对战 AI 敌机</span>
+          </button>
+        </div>
+        <div class="menu-footer">
+          <span>WASD 飞行 | ↑↓ 油门 | Space 射击 | E 导弹</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 操控说明面板 -->
+    <div id="instructions-panel" style="display:none;">
+      <h2>Jet Battle</h2>
+      <h3>飞行操控：</h3>
+      <div class="control-row"><span class="key">W</span><span>爬升</span></div>
+      <div class="control-row"><span class="key">S</span><span>俯冲</span></div>
+      <div class="control-row"><span class="key">A</span><span>左转</span></div>
+      <div class="control-row"><span class="key">D</span><span>右转</span></div>
+      <h3>油门控制：</h3>
+      <div class="control-row"><span class="key">↑</span><span>加速（油门+1档）</span></div>
+      <div class="control-row"><span class="key">↓</span><span>减速（油门-1档）</span></div>
+      <div class="control-row"><span class="key">Shift</span><span>Boost 加速</span></div>
+      <h3>战斗操作：</h3>
+      <div class="control-row"><span class="key">Space</span><span>机枪射击</span></div>
+      <div class="control-row"><span class="key">E</span><span>发射导弹</span></div>
+      <div class="control-row"><span class="key">Q</span><span>释放干扰弹</span></div>
+      <h3>其他：</h3>
+      <div class="control-row"><span class="key">F</span><span>自动稳定</span></div>
+      <div class="control-row"><span class="key">N</span><span>生成敌机</span></div>
+      <div class="control-row"><span class="key">R</span><span>重生</span></div>
+      <div class="control-row"><span class="key">Tab</span><span>排行榜</span></div>
+      <p class="close-hint">点击此面板关闭</p>
+    </div>
+
+    <!-- HUD 界面 -->
+    <div id="hud-overlay" style="display:none;">
+      <!-- 左上：飞行信息 -->
+      <div id="hud-top-left">
+        <div class="hud-info-item">
+          <span class="hud-label">SPD</span>
+          <span class="hud-value" id="hud-speed">0</span>
+          <span class="hud-unit">km/h</span>
+        </div>
+        <div class="hud-info-item">
+          <span class="hud-label">ALT</span>
+          <span class="hud-value" id="hud-altitude">0</span>
+          <span class="hud-unit">m</span>
+        </div>
+        <div class="hud-info-item">
+          <span class="hud-label">THR</span>
+          <span class="hud-value" id="hud-throttle">50%</span>
+        </div>
+      </div>
+
+      <!-- 右上：弹药信息 -->
+      <div id="hud-top-right">
+        <div class="hud-ammo-item">
+          <span class="hud-ammo-icon">🚀</span>
+          <span class="hud-ammo-value" id="hud-missiles">6</span>
+        </div>
+        <div class="hud-ammo-item">
+          <span class="hud-ammo-icon">✦</span>
+          <span class="hud-ammo-value" id="hud-flares">4</span>
+        </div>
+      </div>
+
+      <!-- 左下：状态条 -->
+      <div id="hud-bottom-left">
+        <div class="hud-bar-container">
+          <span class="hud-bar-label">HEALTH</span>
+          <div class="hud-bar">
+            <div class="hud-bar-fill health-bar" id="hud-health-bar" style="width:100%"></div>
+          </div>
+          <span class="hud-bar-value" id="hud-health-value">100%</span>
+        </div>
+        <div class="hud-bar-container">
+          <span class="hud-bar-label">HEAT</span>
+          <div class="hud-bar">
+            <div class="hud-bar-fill heat-bar" id="hud-heat-bar" style="width:0%"></div>
+          </div>
+          <span class="hud-bar-value" id="hud-heat-value">0%</span>
+        </div>
+        <div class="hud-bar-container">
+          <span class="hud-bar-label">BOOST</span>
+          <div class="hud-bar">
+            <div class="hud-bar-fill boost-bar" id="hud-boost-bar" style="width:100%"></div>
+          </div>
+          <span class="hud-bar-value" id="hud-boost-value">100%</span>
+        </div>
+      </div>
+
+      <!-- 底部中央：击杀统计 -->
+      <div id="hud-bottom-center">
+        <span class="hud-stat">KILLS: <strong id="hud-kills">0</strong></span>
+        <span class="hud-stat">DEATHS: <strong id="hud-deaths">0</strong></span>
+        <span class="hud-stat">K/D: <strong id="hud-kd">0.0</strong></span>
+      </div>
+
+      <!-- 中心准星 -->
+      <div id="hud-crosshair">
+        <svg width="60" height="60" viewBox="0 0 60 60">
+          <circle cx="30" cy="30" r="20" stroke="rgba(0,255,136,0.6)" stroke-width="1" fill="none" />
+          <line x1="30" y1="5" x2="30" y2="15" stroke="rgba(0,255,136,0.8)" stroke-width="1" />
+          <line x1="30" y1="45" x2="30" y2="55" stroke="rgba(0,255,136,0.8)" stroke-width="1" />
+          <line x1="5" y1="30" x2="15" y2="30" stroke="rgba(0,255,136,0.8)" stroke-width="1" />
+          <line x1="45" y1="30" x2="55" y2="30" stroke="rgba(0,255,136,0.8)" stroke-width="1" />
+          <circle cx="30" cy="30" r="2" fill="rgba(0,255,136,0.9)" />
+        </svg>
+      </div>
+
+      <!-- 雷达 -->
+      <div id="hud-radar">
+        <canvas id="radar-canvas" width="150" height="150"></canvas>
+      </div>
+
+      <!-- FPS 显示 -->
+      <div id="hud-fps">
+        <span class="hud-label">FPS</span>
+        <span class="hud-value" id="hud-fps-value">60</span>
+      </div>
+    </div>
+
+    <!-- 通知容器 -->
+    <div id="notifications-container"></div>
+
+    <!-- 音频控制 -->
+    <button id="audio-enabler" style="display:none;">Click to Enable Audio</button>
+    <button id="sound-toggle" style="display:none;">🔊 (M)</button>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
