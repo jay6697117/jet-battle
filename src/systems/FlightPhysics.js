@@ -8,11 +8,12 @@ import { clamp, lerp } from '../utils/MathUtils.js';
  * 支持滚转控制 + 触摸输入 + Y 轴反转
  */
 export class FlightPhysics {
-  constructor(player, keyboard, touchInput, settingsManager) {
+  constructor(player, keyboard, touchInput, settingsManager, terrain) {
     this.player = player;
     this.keyboard = keyboard;
     this.touchInput = touchInput;
     this.settingsManager = settingsManager;
+    this.terrain = terrain;
 
     // 内部旋转状态
     this._pitchInput = 0;
@@ -143,11 +144,18 @@ export class FlightPhysics {
     moveForward.multiplyScalar(player.speed * dt);
     player.mesh.position.add(moveForward);
 
-    // 防止飞到地下
-    if (player.mesh.position.y < 5) {
-      player.mesh.position.y = 5;
-      if (forward.y < 0) {
-        this._pitchInput = 0.5;
+    // 地面/山体碰撞坠毁
+    let groundHeight = 5;
+    if (this.terrain) {
+      // 射线检测地形高度，加上少许偏移防止穿模过深
+      groundHeight = Math.max(5, this.terrain.getSurfaceHeight(player.mesh.position.x, player.mesh.position.z));
+    }
+
+    if (player.mesh.position.y < groundHeight + 2 && !player.isDestroyed) {
+      player.mesh.position.y = groundHeight; 
+      player.takeDamage(9999); // 直接击杀
+      if (this.onGroundCrash) {
+        this.onGroundCrash(player.mesh.position.clone());
       }
     }
 

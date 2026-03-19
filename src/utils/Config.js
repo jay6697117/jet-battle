@@ -41,12 +41,12 @@ export const CONFIG = {
   weapons: {
     // 机枪
     gun: {
-      fireRate: 10, // 每秒射速
-      bulletSpeed: 300, // 子弹速度
+      fireRate: 18, // 每秒射速（提升火力密度）
+      bulletSpeed: 500, // 子弹速度（更快命中）
       bulletMaxDistance: 800, // 子弹最大距离
       damage: 8, // 每发伤害
-      heatPerShot: 0.8, // 每发增加热度百分比
-      cooldownRate: 5, // 每秒冷却百分比
+      heatPerShot: 0.4, // 每发增加热度百分比（适配高射速）
+      cooldownRate: 8, // 每秒冷却百分比（更快冷却）
       overheatLockTime: 3.0, // 过热锁定时间（秒）
     },
     // 导弹（制导型，类似现代空空导弹）
@@ -83,7 +83,7 @@ export const CONFIG = {
     detectionRange: 250, // 检测范围缩小
     attackRange: 150, // 攻击范围缩小
     spawnCount: 3, // 每次生成数量减少
-    spawnRadius: 500, // 生成半径增大（更分散）
+    spawnRadius: 300, // 生成半径（靠近玩家保证能检测到）
     bulletDamage: 3, // 子弹伤害降低
     accuracy: 0.08, // 射击散布增大（准度降低）
   },
@@ -93,8 +93,8 @@ export const CONFIG = {
     fov: 60,
     nearClip: 0.1,
     farClip: 10000,
-    followDistance: 15, // 跟随距离
-    followHeight: 5, // 跟随高度
+    followDistance: 25, // 跟随距离（拉远相机，让飞机不挡视野）
+    followHeight: 8, // 跟随高度（稍微抬高，视野更开阔）
     followLerp: 0.05, // 跟随平滑系数
     boostFov: 80, // Boost 时的 FOV
     fovLerp: 0.05, // FOV 变化平滑系数

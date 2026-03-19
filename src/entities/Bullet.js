@@ -16,7 +16,7 @@ export class Bullet {
     this._direction = direction.clone().normalize();
 
     // 子弹网格 — 发光的小长条
-    const geo = new THREE.CylinderGeometry(0.05, 0.05, 1.5, 4);
+    const geo = new THREE.CylinderGeometry(0.15, 0.15, 3.0, 6);
     geo.rotateX(Math.PI / 2);
     const mat = new THREE.MeshBasicMaterial({
       color: owner === 'player' ? 0xffff00 : 0xff4444,

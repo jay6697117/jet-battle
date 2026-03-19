@@ -92,8 +92,7 @@ function setupMainMenu() {
       // 显示 HUD
       hudOverlay.style.display = 'block';
 
-      // 显示音频按钮
-      document.getElementById('audio-enabler').style.display = 'block';
+      // 显示静音切换按钮（音频已默认开启，不需要 enabler 按钮）
       document.getElementById('sound-toggle').style.display = 'block';
 
       // 开始游戏逻辑
@@ -139,7 +138,7 @@ function startGame() {
   touchInput = new TouchInput();
 
   // 创建飞行物理系统
-  flightPhysics = new FlightPhysics(player, keyboard, touchInput, settingsManager);
+  flightPhysics = new FlightPhysics(player, keyboard, touchInput, settingsManager, game.terrain);
 
   // 创建相机跟随系统
   cameraSystem = new CameraSystem(game.camera, player, game);
@@ -151,7 +150,7 @@ function startGame() {
   weaponSystem = new WeaponSystem(player, keyboard, game.scene, touchInput);
 
   // 创建 AI 系统
-  aiSystem = new AISystem(game.scene, player, weaponSystem);
+  aiSystem = new AISystem(game.scene, player, weaponSystem, game.terrain);
 
   // 绑定 AI 系统到武器系统（用于导弹自动锁定）
   weaponSystem.aiSystem = aiSystem;
@@ -181,12 +180,19 @@ function startGame() {
   weaponSystem.onMissileLaunch = () => audioManager.playMissileLaunch();
   weaponSystem.onFlareRelease = () => audioManager.playFlare();
 
-  // 敌机被击杀 → 爆炸特效 + 音效 + 屏幕闪绿 + 击杀计数
+  // 敌机被玩家击杀 → 爆炸特效 + 音效 + 屏幕闪绿 + 击杀计数 + 关卡计数
   collisionSystem.onEnemyKilled = (pos) => {
     particleSystem.createExplosion(pos, 1.5);
     audioManager.playExplosion();
     screenEffects.flashKill(gameState.kills);
     gameState.showNotification('击落敌机！');
+    waveSystem.addPlayerKill(); // 通知关卡系统
+  };
+
+  // 敌机被敌机击杀 → 爆炸特效 + 音效（不计分）
+  collisionSystem.onEnemyKilledByEnemy = (pos) => {
+    particleSystem.createExplosion(pos, 1.2);
+    audioManager.playExplosion();
   };
 
   // 玩家被击中 → 受击火花 + 音效 + 屏幕闪红
@@ -202,7 +208,23 @@ function startGame() {
     audioManager.playExplosion();
     screenEffects.showDeath();
     game.timeScale = 0.3; // 慢动作效果
-    gameState.showNotification('你被击落了！按 R 重生');
+    gameState.showNotification('你被击落了！按 R 重试本关');
+  };
+
+  // 玩家撞地面坠毁 → 爆炸 + 慢动作 + 死亡屏幕
+  flightPhysics.onGroundCrash = (pos) => {
+    particleSystem.createExplosion(pos, 2.5);
+    audioManager.playExplosion();
+    screenEffects.showDeath();
+    game.timeScale = 0.3;
+    gameState.addDeath();
+    gameState.showNotification('坠机了！按 R 重试本关');
+  };
+
+  // 敌机撞地面坠毁 → 爆炸特效 + 音效
+  aiSystem.onEnemyGroundCrash = (pos) => {
+    particleSystem.createExplosion(pos, 1.5);
+    audioManager.playExplosion();
   };
 
   // 启动波次系统（替代手动 spawnWave）
@@ -282,12 +304,22 @@ function startGame() {
  * 处理快捷键
  */
 function handleHotkeys() {
-  // R 键重生
+  // R 键重试本关
   if (keyboard.isJustPressed('KeyR') && player) {
     player.respawn();
     gameState.respawn();
     game.timeScale = 1.0; // 恢复正常速度
-    if (screenEffects) screenEffects.showRespawn();
+    if (screenEffects) {
+      screenEffects.showRespawn();
+      screenEffects.hideLevelResult();
+    }
+    // 重试当前关卡
+    if (waveSystem) {
+      const info = waveSystem.getInfo();
+      if (info.levelState === 'failed' || !gameState.isAlive) {
+        waveSystem.retryLevel();
+      }
+    }
   }
 
   // N 键生成敌机（调试用）

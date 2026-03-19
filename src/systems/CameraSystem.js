@@ -68,7 +68,7 @@ export class CameraSystem {
     // 计算看向点（飞机位置 + 前方偏移，让玩家能看到前方）
     const lookAhead = new THREE.Vector3();
     lookAhead.copy(player.mesh.position);
-    lookAhead.add(forward.clone().multiplyScalar(20));
+    lookAhead.add(forward.clone().multiplyScalar(40));
     lookAhead.y += this._pitchOffset * 10;
 
     cam.lookAt(lookAhead);

@@ -8,23 +8,40 @@ export class AudioManager {
     this.enabled = false;
     this.masterVolume = 0.3;
 
-    // 绑定音频开启按钮
-    this._setupAudioButton();
+    // 直接初始化音频
+    this._initAudio();
+
+    // 浏览器策略：需要用户交互才能恢复 AudioContext
+    this._setupAutoResume();
+
+    // 绑定静音切换按钮
+    this._setupSoundToggle();
   }
 
   /**
-   * 设置音频启用按钮
+   * 监听首次用户交互，自动恢复被浏览器暂停的 AudioContext
    */
-  _setupAudioButton() {
-    const btn = document.getElementById('audio-enabler');
-    if (btn) {
-      btn.addEventListener('click', () => {
-        this._initAudio();
-        btn.style.display = 'none';
+  _setupAutoResume() {
+    const resumeAudio = () => {
+      if (this.ctx && this.ctx.state === 'suspended') {
+        this.ctx.resume().then(() => {
+          console.log('[Audio] AudioContext 已恢复');
+        });
+      }
+      // 恢复后移除监听
+      ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(evt => {
+        document.removeEventListener(evt, resumeAudio);
       });
-    }
+    };
+    ['click', 'keydown', 'touchstart', 'pointerdown'].forEach(evt => {
+      document.addEventListener(evt, resumeAudio, { once: false });
+    });
+  }
 
-    // 静音切换
+  /**
+   * 绑定静音切换按钮
+   */
+  _setupSoundToggle() {
     const toggleBtn = document.getElementById('sound-toggle');
     if (toggleBtn) {
       toggleBtn.addEventListener('click', () => {

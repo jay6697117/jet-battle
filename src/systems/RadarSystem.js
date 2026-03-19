@@ -14,7 +14,7 @@ export class RadarSystem {
     this.ctx = this.canvas ? this.canvas.getContext('2d') : null;
 
     // 雷达参数
-    this._range = 800; // 雷达探测范围
+    this._range = 2000; // 雷达探测范围（加大以覆盖更远敌机）
     this._size = 0;     // Canvas 实际尺寸（像素）
     this._center = 0;
 

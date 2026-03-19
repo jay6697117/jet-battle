@@ -1,64 +1,102 @@
 import { CONFIG } from '../utils/Config.js';
 
 /**
- * 波次系统
- * 自动生成敌机波次，难度递进
+ * 关卡系统（原 WaveSystem）
+ * 生存淘汰制：所有单位各自为战，存活 + 达到最低击杀数过关
+ * 难度逐关递进
  */
 export class WaveSystem {
   constructor(aiSystem, screenEffects) {
     this.aiSystem = aiSystem;
     this.screenEffects = screenEffects;
 
-    this.currentWave = 0;
+    this.currentWave = 0;        // 当前关卡
     this.isActive = false;
     this._countdownTimer = 0;
     this._betweenWaves = false;
-    this._waveDelay = 5.0; // 波次间隔秒数
+    this._waveDelay = 5.0;       // 关卡间隔秒数
     this._checkTimer = 0;
+
+    // 关卡状态
+    this._levelKills = 0;        // 本关玩家击杀数
+    this._levelEnemyCount = 0;   // 本关敌机总数
+    this._requiredKills = 0;     // 本关所需最低击杀数
+    this._levelState = 'idle';   // idle | fighting | complete | failed
+
+    // 关卡配置表
+    this._levelConfigs = [
+      { enemies: 5,  killPercent: 0.20, health: 20, speed: 35, fireRate: 1.0 },
+      { enemies: 8,  killPercent: 0.25, health: 25, speed: 40, fireRate: 1.2 },
+      { enemies: 12, killPercent: 0.33, health: 30, speed: 45, fireRate: 1.5 },
+      { enemies: 16, killPercent: 0.31, health: 35, speed: 50, fireRate: 1.8 },
+      { enemies: 20, killPercent: 0.35, health: 40, speed: 55, fireRate: 2.0 },
+    ];
   }
 
   /**
-   * 开始波次系统
+   * 开始关卡系统
    */
   start() {
     this.isActive = true;
-    this._startWave();
+    this._startLevel();
   }
 
   /**
-   * 开始下一波
+   * 记录玩家击杀（由外部调用）
    */
-  _startWave() {
+  addPlayerKill() {
+    this._levelKills++;
+  }
+
+  /**
+   * 获取当前关卡配置
+   */
+  _getLevelConfig(level) {
+    if (level <= this._levelConfigs.length) {
+      return this._levelConfigs[level - 1];
+    }
+    // 第 6 关以后动态生成
+    const extra = level - this._levelConfigs.length;
+    return {
+      enemies: 20 + extra * 2,
+      killPercent: 0.40,
+      health: 40 + extra * 5,
+      speed: 55 + extra * 5,
+      fireRate: Math.min(2.0 + extra * 0.2, 5.0),
+    };
+  }
+
+  /**
+   * 开始下一关
+   */
+  _startLevel() {
     this.currentWave++;
     this._betweenWaves = false;
+    this._levelKills = 0;
+    this._levelState = 'fighting';
 
-    // 难度递进
-    const baseCount = 3;
-    const extraPerWave = 2;
-    const count = Math.min(baseCount + (this.currentWave - 1) * extraPerWave, 20);
+    const config = this._getLevelConfig(this.currentWave);
+    this._levelEnemyCount = config.enemies;
+    this._requiredKills = Math.ceil(config.enemies * config.killPercent);
 
     // 调整 AI 难度参数
-    this._adjustDifficulty();
+    CONFIG.enemy.maxHealth = config.health;
+    CONFIG.enemy.speed = config.speed;
+    CONFIG.enemy.fireRate = config.fireRate;
+    CONFIG.enemy.detectionRange = 250 + (this.currentWave - 1) * 15;
+    CONFIG.enemy.attackRange = 150 + (this.currentWave - 1) * 10;
 
     // 生成敌机
-    this.aiSystem.spawnWave(count);
+    this.aiSystem.spawnWave(config.enemies);
 
-    // 显示波次提示
+    // 显示关卡开始信息
     if (this.screenEffects) {
-      this.screenEffects.showWave(this.currentWave);
+      this.screenEffects.showLevelStart(
+        this.currentWave,
+        config.enemies,
+        this._requiredKills
+      );
     }
-  }
-
-  /**
-   * 根据波次调整难度（平缓递进）
-   */
-  _adjustDifficulty() {
-    const wave = this.currentWave;
-    // 缓慢递增敌机速度和射速
-    CONFIG.enemy.speed = 40 + wave * 3;
-    CONFIG.enemy.fireRate = Math.min(1.5 + wave * 0.3, 5);
-    CONFIG.enemy.detectionRange = 250 + wave * 15;
-    CONFIG.enemy.attackRange = 150 + wave * 10;
   }
 
   /**
@@ -67,7 +105,7 @@ export class WaveSystem {
   update(dt) {
     if (!this.isActive) return;
 
-    // 波次间歇期
+    // 关卡间歇期
     if (this._betweenWaves) {
       this._countdownTimer -= dt;
 
@@ -82,31 +120,70 @@ export class WaveSystem {
       }
 
       if (this._countdownTimer <= 0) {
-        this._startWave();
+        this._startLevel();
       }
       return;
     }
 
-    // 检查是否全部敌机被消灭
+    // 战斗中：检查关卡结束条件
+    if (this._levelState !== 'fighting') return;
+
     this._checkTimer += dt;
     if (this._checkTimer >= 0.5) {
       this._checkTimer = 0;
       const aliveCount = this.aiSystem.getAliveEnemies().length;
+
       if (aliveCount === 0) {
-        // 开始倒计时
-        this._betweenWaves = true;
-        this._countdownTimer = this._waveDelay;
+        // 所有敌机消灭，检查玩家击杀数
+        if (this._levelKills >= this._requiredKills) {
+          // 过关！
+          this._levelState = 'complete';
+          if (this.screenEffects) {
+            this.screenEffects.showLevelComplete(this.currentWave);
+          }
+          // 进入下一关倒计时
+          this._betweenWaves = true;
+          this._countdownTimer = this._waveDelay;
+        } else {
+          // 击杀不足，失败
+          this._levelState = 'failed';
+          if (this.screenEffects) {
+            this.screenEffects.showLevelFailed(
+              `击杀不足！需要 ${this._requiredKills} 个，你击杀了 ${this._levelKills} 个`
+            );
+          }
+        }
       }
     }
   }
 
   /**
-   * 获取当前波次信息
+   * 重试当前关卡
+   */
+  retryLevel() {
+    // 清除残留敌机
+    const enemies = this.aiSystem.getAliveEnemies();
+    for (const enemy of enemies) {
+      enemy.isDestroyed = true;
+    }
+    // 倒退关卡号（_startLevel 会 +1）
+    this.currentWave--;
+    this._levelState = 'idle';
+    this._betweenWaves = false;
+    this._startLevel();
+  }
+
+  /**
+   * 获取当前关卡信息
    */
   getInfo() {
     return {
       wave: this.currentWave,
       enemiesAlive: this.aiSystem.getAliveEnemies().length,
+      totalEnemies: this._levelEnemyCount,
+      levelKills: this._levelKills,
+      requiredKills: this._requiredKills,
+      levelState: this._levelState,
       isBetweenWaves: this._betweenWaves,
     };
   }

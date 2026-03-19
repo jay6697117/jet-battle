@@ -24,6 +24,7 @@ export class HUDSystem {
       heatValue: document.getElementById('hud-heat-value'),
       boostBar: document.getElementById('hud-boost-bar'),
       boostValue: document.getElementById('hud-boost-value'),
+      levelKills: document.getElementById('hud-level-kills'),
     };
   }
 
@@ -52,7 +53,7 @@ export class HUDSystem {
       els.throttle.textContent = Math.round(percent) + '%';
     }
 
-    // 波次
+    // 波次（关卡号）
     if (els.wave && waveSystem) {
       els.wave.textContent = waveSystem.currentWave;
     }
@@ -71,6 +72,12 @@ export class HUDSystem {
     if (els.enemies && waveSystem) {
       const info = waveSystem.getInfo();
       els.enemies.textContent = info.enemiesAlive;
+    }
+
+    // 关卡击杀进度
+    if (els.levelKills && waveSystem) {
+      const info = waveSystem.getInfo();
+      els.levelKills.textContent = `${info.levelKills}/${info.requiredKills}`;
     }
 
     // 血量条

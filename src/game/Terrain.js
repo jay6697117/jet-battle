@@ -501,6 +501,32 @@ export class Terrain {
     return geo1;
   }
 
+  // =============================================
+  // 辅助：获取某坐标精确地表高度（包括山体/建筑等）
+  // =============================================
+  getSurfaceHeight(x, z) {
+    if (!this._raycaster) {
+      this._raycaster = new THREE.Raycaster();
+      this._downDir = new THREE.Vector3(0, -1, 0);
+      this._rayOrigin = new THREE.Vector3();
+      // 让射线检测尽可能优化
+      this._raycaster.firstHitOnly = true; 
+    }
+
+    this._rayOrigin.set(x, 5000, z);
+    this._raycaster.set(this._rayOrigin, this._downDir);
+
+    const objects = [this.terrainMesh, ...this._instancedMeshes];
+    const intersects = this._raycaster.intersectObjects(objects, false);
+
+    if (intersects.length > 0) {
+      return intersects[0].point.y;
+    }
+
+    // 默认回退到基础地形高度
+    return this._heightAt(x, z);
+  }
+
   /**
    * 每帧更新（预留用于动态效果）
    */

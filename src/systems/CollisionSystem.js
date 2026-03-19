@@ -3,6 +3,7 @@ import * as THREE from 'three';
 /**
  * 碰撞检测系统
  * 检测子弹/导弹命中目标，处理伤害
+ * 支持敌机之间的子弹碰撞和飞机碰撞
  */
 export class CollisionSystem {
   constructor(player, aiSystem, weaponSystem, gameState) {
@@ -12,12 +13,13 @@ export class CollisionSystem {
     this.gameState = gameState;
 
     // 碰撞半径
-    this._bulletHitRadius = 5;    // 子弹命中判定半径
-    this._missileHitRadius = 10;  // 导弹命中判定半径
-    this._jetCollisionRadius = 8; // 飞机碰撞判定半径
+    this._bulletHitRadius = 10;   // 子弹命中判定半径（放大，配合更大的敌机模型）
+    this._missileHitRadius = 15;  // 导弹命中判定半径（同步放大）
+    this._jetCollisionRadius = 15; // 飞机碰撞判定半径（同步放大）
 
-    // 击杀回调（用于触发爆炸特效等）
-    this.onEnemyKilled = null;
+    // 击杀回调
+    this.onEnemyKilled = null;       // 玩家击杀敌机
+    this.onEnemyKilledByEnemy = null; // 敌机被敌机击杀
     this.onPlayerHit = null;
     this.onPlayerKilled = null;
   }
@@ -29,7 +31,9 @@ export class CollisionSystem {
     this._checkPlayerBulletsVsEnemies();
     this._checkPlayerMissilesVsEnemies();
     this._checkEnemyBulletsVsPlayer();
+    this._checkEnemyBulletsVsEnemies(); // 新增：敌机子弹 vs 敌机
     this._checkJetCollisions();
+    this._checkEnemyJetCollisions();    // 新增：敌机之间碰撞
   }
 
   /**
@@ -115,7 +119,34 @@ export class CollisionSystem {
   }
 
   /**
-   * 飞机间碰撞
+   * 敌机子弹 vs 其他敌机（混战互杀）
+   */
+  _checkEnemyBulletsVsEnemies() {
+    const bullets = this.aiSystem.getEnemyBullets();
+    const enemies = this.aiSystem.getAliveEnemies();
+
+    for (const bullet of bullets) {
+      for (const enemy of enemies) {
+        // 跳过发射者自己（通过位置近似判断，子弹刚出膛时很近）
+        // 子弹不会打自己：刚发射时距离 > 6 单位
+        const dist = bullet.mesh.position.distanceTo(enemy.mesh.position);
+        if (dist < this._bulletHitRadius) {
+          enemy.takeDamage(bullet.damage);
+          bullet.destroy();
+
+          if (enemy.isDestroyed) {
+            if (this.onEnemyKilledByEnemy) {
+              this.onEnemyKilledByEnemy(enemy.mesh.position.clone());
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * 飞机间碰撞（玩家 vs 敌机）
    */
   _checkJetCollisions() {
     if (this.player.isDestroyed) return;
@@ -142,6 +173,32 @@ export class CollisionSystem {
           this.gameState.addDeath();
           if (this.onPlayerKilled) {
             this.onPlayerKilled(this.player.mesh.position.clone());
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * 敌机之间碰撞（混战互撞）
+   */
+  _checkEnemyJetCollisions() {
+    const enemies = this.aiSystem.getAliveEnemies();
+
+    for (let i = 0; i < enemies.length; i++) {
+      for (let j = i + 1; j < enemies.length; j++) {
+        const a = enemies[i];
+        const b = enemies[j];
+        const dist = a.mesh.position.distanceTo(b.mesh.position);
+        if (dist < this._jetCollisionRadius) {
+          a.takeDamage(15);
+          b.takeDamage(15);
+
+          if (a.isDestroyed && this.onEnemyKilledByEnemy) {
+            this.onEnemyKilledByEnemy(a.mesh.position.clone());
+          }
+          if (b.isDestroyed && this.onEnemyKilledByEnemy) {
+            this.onEnemyKilledByEnemy(b.mesh.position.clone());
           }
         }
       }

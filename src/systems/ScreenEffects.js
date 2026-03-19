@@ -27,10 +27,16 @@ export class ScreenEffects {
     this._deathOverlay.innerHTML = `
       <div class="death-content">
         <div class="death-title">DESTROYED</div>
-        <div class="death-subtitle">按 R 键重生</div>
+        <div class="death-subtitle">按 R 键重试本关</div>
       </div>
     `;
     document.body.appendChild(this._deathOverlay);
+
+    // 关卡结果提示（过关/失败）
+    this._levelResultOverlay = document.createElement('div');
+    this._levelResultOverlay.className = 'screen-effect wave-overlay';
+    this._levelResultOverlay.innerHTML = `<div class="wave-text"></div>`;
+    document.body.appendChild(this._levelResultOverlay);
 
     // 重生闪白效果
     this._respawnOverlay = document.createElement('div');
@@ -103,8 +109,45 @@ export class ScreenEffects {
    */
   showCountdown(seconds) {
     const textEl = this._waveOverlay.querySelector('.wave-text');
-    textEl.textContent = `下一波: ${seconds}s`;
+    textEl.textContent = `下一关: ${seconds}s`;
     this._waveOverlay.classList.add('active');
     setTimeout(() => this._waveOverlay.classList.remove('active'), 1000);
+  }
+
+  /**
+   * 显示关卡开始信息
+   */
+  showLevelStart(level, enemyCount, requiredKills) {
+    const textEl = this._waveOverlay.querySelector('.wave-text');
+    textEl.innerHTML = `第 ${level} 关<br><span style="font-size:0.5em;opacity:0.8">${enemyCount} 架敌机 · 至少击杀 ${requiredKills} 架</span>`;
+    this._waveOverlay.classList.add('active');
+    setTimeout(() => this._waveOverlay.classList.remove('active'), 3000);
+  }
+
+  /**
+   * 显示过关提示
+   */
+  showLevelComplete(level) {
+    const textEl = this._levelResultOverlay.querySelector('.wave-text');
+    textEl.innerHTML = `<span style="color:#00ff88">✓ 第 ${level} 关通过！</span>`;
+    this._levelResultOverlay.classList.add('active');
+    setTimeout(() => this._levelResultOverlay.classList.remove('active'), 3000);
+  }
+
+  /**
+   * 显示失败提示
+   */
+  showLevelFailed(reason) {
+    const textEl = this._levelResultOverlay.querySelector('.wave-text');
+    textEl.innerHTML = `<span style="color:#ff4444">✗ 关卡失败</span><br><span style="font-size:0.5em;opacity:0.8">${reason}<br>按 R 键重试</span>`;
+    this._levelResultOverlay.classList.add('active');
+    // 失败提示不自动消失，等重试时手动隐藏
+  }
+
+  /**
+   * 隐藏关卡结果提示
+   */
+  hideLevelResult() {
+    this._levelResultOverlay.classList.remove('active');
   }
 }
