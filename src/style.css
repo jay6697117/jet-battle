@@ -58,9 +58,10 @@ body > canvas {
 }
 
 .menu-title {
-  font-family: 'Black Ops One', cursive;
-  font-size: 72px;
-  letter-spacing: 8px;
+  font-family: 'Black Ops One', 'Noto Sans SC', sans-serif;
+  font-size: 64px;
+  letter-spacing: 4px;
+  line-height: 1.2;
   color: #fff;
   text-shadow:
     0 0 20px rgba(0, 255, 136, 0.5),
