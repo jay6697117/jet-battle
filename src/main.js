@@ -70,6 +70,9 @@ function init() {
 
   // 绑定全局快捷键
   setupGlobalKeys();
+
+  // 初始化弹药图标 tooltip（移动端点击支持）
+  setupAmmoTooltips();
 }
 
 /**
@@ -125,6 +128,37 @@ function setupGlobalKeys() {
 }
 
 /**
+ * 初始化弹药图标 tooltip（移动端点击切换显示）
+ */
+function setupAmmoTooltips() {
+  const items = document.querySelectorAll('.hud-ammo-item[data-tooltip]');
+  let hideTimer = null;
+
+  items.forEach(item => {
+    item.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      // 清除之前的计时器
+      if (hideTimer) clearTimeout(hideTimer);
+      // 先移除所有 tooltip
+      items.forEach(i => i.classList.remove('tooltip-active'));
+      // 显示当前 tooltip
+      item.classList.add('tooltip-active');
+      // 2 秒后自动隐藏
+      hideTimer = setTimeout(() => {
+        item.classList.remove('tooltip-active');
+      }, 2000);
+    });
+  });
+
+  // 点击其他区域隐藏 tooltip
+  document.addEventListener('touchstart', (e) => {
+    if (!e.target.closest('.hud-ammo-item[data-tooltip]')) {
+      items.forEach(i => i.classList.remove('tooltip-active'));
+    }
+  });
+}
+
+/**
  * 开始游戏
  */
 function startGame() {
@@ -143,8 +177,9 @@ function startGame() {
   // 创建相机跟随系统
   cameraSystem = new CameraSystem(game.camera, player, game);
 
-  // 创建 HUD 系统
+  // 创建 HUD 系统（会在 weaponSystem 创建后设置）
   hudSystem = new HUDSystem(player);
+  hudSystem.flightPhysics = flightPhysics;
 
   // 创建武器系统
   weaponSystem = new WeaponSystem(player, keyboard, game.scene, touchInput);
@@ -158,8 +193,11 @@ function startGame() {
   // 创建碰撞检测系统
   collisionSystem = new CollisionSystem(player, aiSystem, weaponSystem, gameState);
 
-  // 创建雷达系统
-  radarSystem = new RadarSystem(player, aiSystem);
+  // 创建雷达系统（传入 weaponSystem 用于锁定标记显示）
+  radarSystem = new RadarSystem(player, aiSystem, weaponSystem);
+
+  // 绑定 weaponSystem 到 HUD 系统
+  hudSystem.weaponSystem = weaponSystem;
 
   // 创建粒子系统
   particleSystem = new ParticleSystem(game.scene);
@@ -179,6 +217,7 @@ function startGame() {
   weaponSystem.onGunFire = () => audioManager.playGunFire();
   weaponSystem.onMissileLaunch = () => audioManager.playMissileLaunch();
   weaponSystem.onFlareRelease = () => audioManager.playFlare();
+  weaponSystem.onMissileLockFail = () => gameState.showNotification('未锁定目标！');
 
   // 敌机被玩家击杀 → 爆炸特效 + 音效 + 屏幕闪绿 + 击杀计数 + 关卡计数
   collisionSystem.onEnemyKilled = (pos) => {
@@ -319,6 +358,18 @@ function handleHotkeys() {
       if (info.levelState === 'failed' || !gameState.isAlive) {
         waveSystem.retryLevel();
       }
+    }
+  }
+
+  // G 键切换自动导航模式
+  if (keyboard.isJustPressed('KeyG') && flightPhysics && aiSystem) {
+    const result = flightPhysics.toggleAutoNav(aiSystem);
+    if (result === 'on') {
+      gameState.showNotification('🧭 自动导航已开启');
+    } else if (result === 'off') {
+      gameState.showNotification('自动导航已关闭');
+    } else if (result === 'no_target') {
+      gameState.showNotification('⚠ 无可用目标');
     }
   }
 

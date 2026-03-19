@@ -26,6 +26,12 @@ export class FlightPhysics {
 
     // 失速警告
     this.isStalling = false;
+
+    // 自动导航模式
+    this.autoNavEnabled = false;
+    this.autoNavTarget = null;
+    this._autoNavCloseDistance = 150; // 到达此距离后自动关闭导航
+    this._autoNavTurnSpeed = 2.0;     // 自动转向速度
   }
 
   /**
@@ -113,6 +119,11 @@ export class FlightPhysics {
       this._autoStabilize(dt);
     }
 
+    // 自动导航模式 — 覆盖玩家输入，朝目标自动转向
+    if (this.autoNavEnabled) {
+      this._autoNavigate(dt);
+    }
+
     // 失速时强制俯冲
     if (this.isStalling && !kb.isPressed('KeyF')) {
       this._pitchInput -= fc.stallPitchRate;
@@ -175,5 +186,105 @@ export class FlightPhysics {
     euler.x = lerp(euler.x, 0, stab * dt);
     euler.z = lerp(euler.z, 0, stab * dt);
     player.mesh.quaternion.setFromEuler(euler);
+  }
+
+  /**
+   * 切换自动导航模式
+   * @param {AISystem} aiSystem — 用于获取存活敌机列表
+   * @returns {string} 状态文字，用于通知玩家
+   */
+  toggleAutoNav(aiSystem) {
+    if (this.autoNavEnabled) {
+      // 关闭导航
+      this.autoNavEnabled = false;
+      this.autoNavTarget = null;
+      return 'off';
+    }
+
+    // 尝试找到最近的敌机
+    const target = this._findNearestEnemy(aiSystem);
+    if (!target) {
+      return 'no_target';
+    }
+
+    this.autoNavEnabled = true;
+    this.autoNavTarget = target;
+    return 'on';
+  }
+
+  /**
+   * 自动导航 — 平滑转向朝目标飞行
+   */
+  _autoNavigate(dt) {
+    const player = this.player;
+    const target = this.autoNavTarget;
+
+    // 目标不存在或已被摧毁 → 尝试寻找下一个
+    if (!target || target.isDestroyed) {
+      this.autoNavTarget = this._findNearestEnemy(this._cachedAISystem);
+      if (!this.autoNavTarget) {
+        this.autoNavEnabled = false;
+        return;
+      }
+    }
+
+    // 计算到目标的方向和距离
+    const toTarget = new THREE.Vector3();
+    toTarget.subVectors(this.autoNavTarget.mesh.position, player.mesh.position);
+    const distance = toTarget.length();
+
+    // 到达近距离 → 自动关闭导航
+    if (distance <= this._autoNavCloseDistance) {
+      this.autoNavEnabled = false;
+      this.autoNavTarget = null;
+      return;
+    }
+
+    // 用球面插值平滑转向目标
+    const targetDir = toTarget.normalize();
+    const targetQuat = new THREE.Quaternion();
+    const lookMat = new THREE.Matrix4();
+    const eye = player.mesh.position.clone();
+    const center = player.mesh.position.clone().add(targetDir);
+    const up = new THREE.Vector3(0, 1, 0);
+    lookMat.lookAt(eye, center, up);
+    targetQuat.setFromRotationMatrix(lookMat);
+
+    // 旋转 180°修正（lookAt 和模型朝向可能相反）
+    const flipQuat = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0), Math.PI
+    );
+    targetQuat.multiply(flipQuat);
+
+    // 平滑插值，turnSpeed * dt 控制转向速率
+    const t = clamp(this._autoNavTurnSpeed * dt, 0, 1);
+    player.mesh.quaternion.slerp(targetQuat, t);
+    player.mesh.quaternion.normalize();
+  }
+
+  /**
+   * 从 AISystem 获取最近存活敌机
+   */
+  _findNearestEnemy(aiSystem) {
+    if (!aiSystem) return null;
+    // 缓存 aiSystem 引用，以便目标被摧毁时自动寻找下一个
+    this._cachedAISystem = aiSystem;
+
+    const enemies = aiSystem.getAliveEnemies();
+    if (enemies.length === 0) return null;
+
+    let nearest = null;
+    let nearestDist = Infinity;
+    const pPos = this.player.mesh.position;
+
+    for (const enemy of enemies) {
+      const dist = pPos.distanceTo(enemy.mesh.position);
+      if (dist < nearestDist) {
+        nearestDist = dist;
+        nearest = enemy;
+      }
+    }
+
+    return nearest;
   }
 }

@@ -6,8 +6,10 @@ import { CONFIG } from '../utils/Config.js';
  * 支持波次显示、敌机计数、速度百分比
  */
 export class HUDSystem {
-  constructor(player) {
+  constructor(player, weaponSystem = null) {
     this.player = player;
+    this.weaponSystem = weaponSystem;
+    this.flightPhysics = null; // 由外部设置
 
     // 缓存 DOM 元素
     this.els = {
@@ -25,6 +27,9 @@ export class HUDSystem {
       boostBar: document.getElementById('hud-boost-bar'),
       boostValue: document.getElementById('hud-boost-value'),
       levelKills: document.getElementById('hud-level-kills'),
+      autoNav: document.getElementById('hud-autonav'),
+      autoNavDist: document.getElementById('hud-autonav-dist'),
+      lockStatus: document.getElementById('hud-lock-status'),
     };
   }
 
@@ -113,6 +118,41 @@ export class HUDSystem {
     }
     if (els.boostValue) {
       els.boostValue.textContent = Math.round(p.boostEnergy) + '%';
+    }
+
+    // 锁定状态
+    if (els.lockStatus && this.weaponSystem) {
+      const ws = this.weaponSystem;
+      if (ws.isLocked && ws.lockTarget) {
+        // 已锁定
+        els.lockStatus.textContent = '已锁定 ✓';
+        els.lockStatus.className = 'hud-lock-status locked';
+      } else if (ws.lockTarget && ws.lockProgress > 0) {
+        // 锁定中（显示剩余倒计时）
+        const remaining = ((1 - ws.lockProgress) * CONFIG.weapons.missile.lockTime).toFixed(1);
+        els.lockStatus.textContent = `锁定中 ${remaining}s`;
+        els.lockStatus.className = 'hud-lock-status locking';
+      } else {
+        // 无目标
+        els.lockStatus.textContent = '无目标';
+        els.lockStatus.className = 'hud-lock-status no-target';
+      }
+    }
+
+    // 自动导航状态
+    if (els.autoNav && this.flightPhysics) {
+      if (this.flightPhysics.autoNavEnabled) {
+        els.autoNav.style.display = 'flex';
+        // 显示距离
+        if (els.autoNavDist && this.flightPhysics.autoNavTarget) {
+          const dist = p.mesh.position.distanceTo(
+            this.flightPhysics.autoNavTarget.mesh.position
+          );
+          els.autoNavDist.textContent = Math.round(dist) + 'm';
+        }
+      } else {
+        els.autoNav.style.display = 'none';
+      }
     }
   }
 }

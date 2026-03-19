@@ -37,6 +37,7 @@ export class WeaponSystem {
     this.onGunFire = null;
     this.onMissileLaunch = null;
     this.onFlareRelease = null;
+    this.onMissileLockFail = null; // 未锁定尝试发射的回调
   }
 
   /**
@@ -70,9 +71,17 @@ export class WeaponSystem {
     // === 更新自动锁定 ===
     this._updateAutoLock(dt);
 
-    // === 导弹发射（自动锁定最近敌机） ===
-    if (kb.isJustPressed('KeyE') && p.missiles > 0) {
-      this._fireMissile();
+    // === 导弹发射（必须先锁定目标） ===
+    if (kb.isJustPressed('KeyE')) {
+      if (p.missiles <= 0) {
+        // 没导弹了，不做任何操作
+      } else if (!this.isLocked || !this.lockTarget) {
+        // 未锁定目标，触发失败提示
+        if (this.onMissileLockFail) this.onMissileLockFail();
+      } else {
+        // 已锁定，发射导弹
+        this._fireMissile();
+      }
     }
 
     // === 干扰弹 ===
@@ -179,7 +188,7 @@ export class WeaponSystem {
   }
 
   /**
-   * 发射导弹 — 自动锁定最近敌机
+   * 发射导弹 — 必须先锁定目标
    */
   _fireMissile() {
     const p = this.player;
@@ -188,27 +197,17 @@ export class WeaponSystem {
     const forward = p.getForward();
     const spawnPos = p.mesh.position.clone().add(forward.clone().multiplyScalar(8));
 
-    // 如果已锁定目标，导弹追踪该目标
-    // 如果未锁定，自动选择最近的敌机作为目标
-    let target = null;
-    if (this.isLocked && this.lockTarget) {
-      target = this.lockTarget;
-    } else if (this.aiSystem) {
-      // 找最近的敌机
-      const enemies = this.aiSystem.getAliveEnemies();
-      let minDist = Infinity;
-      for (const e of enemies) {
-        const d = e.mesh.position.distanceTo(p.mesh.position);
-        if (d < minDist) {
-          minDist = d;
-          target = e;
-        }
-      }
-    }
+    // 使用已锁定的目标
+    const target = this.lockTarget;
 
     const missile = new Missile(spawnPos, forward, target, 'player');
     this.missiles.push(missile);
     this.scene.add(missile.mesh);
+
+    // 发射后重置锁定状态（每枚导弹都需要重新锁定）
+    this.lockTarget = null;
+    this.lockProgress = 0;
+    this.isLocked = false;
 
     // 音频回调
     if (this.onMissileLaunch) this.onMissileLaunch();
