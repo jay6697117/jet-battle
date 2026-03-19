@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import './style.css';
 import { Game } from './game/Game.js';
 import { GameState } from './game/GameState.js';
