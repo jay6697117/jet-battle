@@ -25,6 +25,16 @@ export class PlayerJet {
     this.missiles = 6;
     this.flares = 4;
 
+    // Buff 状态标记（由 PowerUpSystem 控制）
+    this._buffInvincible = false;   // 无敌护甲
+    this._buffDoubleDamage = false; // 双倍伤害
+    this._buffScatterShot = false;  // 散射子弹
+    this._buffNoOverheat = false;   // 机枪不过热
+    this._buffSpeedBoost = false;   // 高速飞行
+    this._buffInfiniteBoost = false;// 无限加力
+    this._buffCooldown = false;     // 冷却强化
+    this._buffTimeSlow = false;     // 时间减速
+
     // 引擎喷口引用（用于发光效果）
     this.nozzle = null;
 
@@ -178,5 +188,15 @@ export class PlayerJet {
     this.speed = 0;
     this.mesh.position.set(0, 300, 0);
     this.mesh.rotation.set(0, 0, 0);
+
+    // 清除所有 buff
+    this._buffInvincible = false;
+    this._buffDoubleDamage = false;
+    this._buffScatterShot = false;
+    this._buffNoOverheat = false;
+    this._buffSpeedBoost = false;
+    this._buffInfiniteBoost = false;
+    this._buffCooldown = false;
+    this._buffTimeSlow = false;
   }
 }

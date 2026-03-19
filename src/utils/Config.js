@@ -135,4 +135,56 @@ export const CONFIG = {
       fogFar: 8000,
     },
   },
+
+  // 盲盒道具系统
+  powerUp: {
+    // 地图刷新
+    mapSpawn: {
+      intervalMin: 15,       // 最小刷新间隔（秒）
+      intervalMax: 25,       // 最大刷新间隔（秒）
+      maxOnMap: 3,           // 地图上最多同时存在
+      spawnRadius: 500,      // 生成范围半径（以玩家为中心）
+      spawnHeightMin: 100,   // 最低生成高度
+      spawnHeightMax: 400,   // 最高生成高度
+      lifetime: 30,          // 盲盒存在时间（秒）
+    },
+    // 击杀掉落
+    killDrop: {
+      chance: 0.4,           // 40% 掉落概率
+    },
+    // 关卡奖励稀有度加成
+    levelReward: {
+      rarityBonus: 0.05,     // 每关 +5% 高稀有度概率
+    },
+    // 拾取半径
+    pickupRadius: 25,
+    // 稀有度权重
+    rarityWeights: {
+      common: 50,
+      rare: 30,
+      epic: 15,
+      legendary: 5,
+    },
+    // 稀有度颜色
+    rarityColors: {
+      common: 0x00ff88,
+      rare: 0x4488ff,
+      epic: 0xaa44ff,
+      legendary: 0xffaa00,
+    },
+    // 稀有度中文名
+    rarityNames: {
+      common: '普通',
+      rare: '稀有',
+      epic: '史诗',
+      legendary: '传说',
+    },
+    // 各道具的持续时间范围（秒）[min, max]
+    durationByRarity: {
+      common: [5, 8],
+      rare: [8, 12],
+      epic: [12, 15],
+      legendary: [15, 20],
+    },
+  },
 };

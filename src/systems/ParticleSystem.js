@@ -109,6 +109,58 @@ export class ParticleSystem {
   }
 
   /**
+   * 创建盲盒拾取粒子爆发
+   */
+  createPowerUpPickup(position, color) {
+    const particles = [];
+    const count = 25;
+
+    for (let i = 0; i < count; i++) {
+      const geo = new THREE.SphereGeometry(0.2 + Math.random() * 0.3, 4, 4);
+      const mat = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 1.0,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.copy(position);
+
+      // 向四面八方辐射
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.random() * Math.PI;
+      const speed = 30 + Math.random() * 40;
+      const velocity = new THREE.Vector3(
+        Math.sin(phi) * Math.cos(theta) * speed,
+        Math.sin(phi) * Math.sin(theta) * speed,
+        Math.cos(phi) * speed
+      );
+
+      this.scene.add(mesh);
+      particles.push({
+        mesh,
+        velocity,
+        life: 0,
+        maxLife: 0.6 + Math.random() * 0.4,
+        isPowerUp: true,
+      });
+    }
+
+    // 中心闪光球
+    const flashGeo = new THREE.SphereGeometry(4, 8, 8);
+    const flashMat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.8,
+    });
+    const flash = new THREE.Mesh(flashGeo, flashMat);
+    flash.position.copy(position);
+    this.scene.add(flash);
+    particles.push({ mesh: flash, velocity: new THREE.Vector3(), life: 0, maxLife: 0.2, isFlash: true });
+
+    this._effects.push({ particles, type: 'powerup' });
+  }
+
+  /**
    * 每帧更新所有粒子
    */
   update(dt) {

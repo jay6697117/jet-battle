@@ -53,6 +53,11 @@ export class ScreenEffects {
     this._killPopup = document.createElement('div');
     this._killPopup.className = 'screen-effect kill-popup';
     document.body.appendChild(this._killPopup);
+
+    // 盲盒拾取闪光
+    this._powerUpOverlay = document.createElement('div');
+    this._powerUpOverlay.className = 'screen-effect powerup-flash';
+    document.body.appendChild(this._powerUpOverlay);
   }
 
   /**
@@ -92,6 +97,15 @@ export class ScreenEffects {
     this._deathOverlay.classList.remove('active');
     this._respawnOverlay.classList.add('active');
     setTimeout(() => this._respawnOverlay.classList.remove('active'), 500);
+  }
+
+  /**
+   * 盲盒拾取闪光（自定义颜色）
+   */
+  flashPowerUp(colorHex) {
+    this._powerUpOverlay.style.boxShadow = `inset 0 0 100px ${colorHex}, inset 0 0 200px ${colorHex}40`;
+    this._powerUpOverlay.classList.add('active');
+    setTimeout(() => this._powerUpOverlay.classList.remove('active'), 400);
   }
 
   /**

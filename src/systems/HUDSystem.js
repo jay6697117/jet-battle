@@ -30,13 +30,14 @@ export class HUDSystem {
       autoNav: document.getElementById('hud-autonav'),
       autoNavDist: document.getElementById('hud-autonav-dist'),
       lockStatus: document.getElementById('hud-lock-status'),
+      buffs: document.getElementById('hud-buffs'),
     };
   }
 
   /**
    * 每帧更新
    */
-  update(dt, waveSystem) {
+  update(dt, waveSystem, powerUpSystem) {
     const p = this.player;
     const els = this.els;
 
@@ -153,6 +154,45 @@ export class HUDSystem {
       } else {
         els.autoNav.style.display = 'none';
       }
+    }
+
+    // Buff 道具状态
+    this._updateBuffs(powerUpSystem);
+  }
+
+  /**
+   * 更新 Buff 道具的 HUD 显示
+   */
+  _updateBuffs(powerUpSystem) {
+    if (!this.els.buffs || !powerUpSystem) return;
+    const buffs = powerUpSystem.getActiveBuffs();
+
+    // 清空旧内容
+    this.els.buffs.innerHTML = '';
+
+    for (const buff of buffs) {
+      const item = document.createElement('div');
+      item.className = 'buff-item';
+      if (buff.remaining <= 3) item.classList.add('expiring');
+
+      // 圆形倒计时进度
+      const progress = buff.remaining / buff.duration;
+      const circumference = 2 * Math.PI * 20;
+      const offset = circumference * (1 - progress);
+
+      item.innerHTML = `
+        <span>${buff.icon}</span>
+        <div class="buff-timer">
+          <svg viewBox="0 0 48 48">
+            <circle cx="24" cy="24" r="20"
+              stroke="${buff.color}"
+              stroke-dasharray="${circumference}"
+              stroke-dashoffset="${offset}" />
+          </svg>
+        </div>
+      `;
+      item.title = `${buff.name} — ${Math.ceil(buff.remaining)}s`;
+      this.els.buffs.appendChild(item);
     }
   }
 }

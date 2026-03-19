@@ -15,6 +15,7 @@ import { RadarSystem } from './systems/RadarSystem.js';
 import { ParticleSystem } from './systems/ParticleSystem.js';
 import { ScreenEffects } from './systems/ScreenEffects.js';
 import { WaveSystem } from './systems/WaveSystem.js';
+import { PowerUpSystem } from './systems/PowerUpSystem.js';
 import { DebugPanel } from './systems/DebugPanel.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { SettingsManager } from './game/SettingsManager.js';
@@ -44,6 +45,7 @@ let waveSystem = null;
 let debugPanel = null;
 let audioManager = null;
 let settingsManager = null;
+let powerUpSystem = null;
 
 // 尾迹计时器
 let _trailTimer = 0;
@@ -189,6 +191,10 @@ function startGame() {
   // 创建波次系统
   waveSystem = new WaveSystem(aiSystem, screenEffects);
 
+  // 创建盲盒道具系统
+  powerUpSystem = new PowerUpSystem(player, game.scene, particleSystem, gameState, screenEffects);
+  window.powerUpSystem = powerUpSystem; // 暴露给控制台调试
+
   // 创建调试面板
   debugPanel = new DebugPanel(game, aiSystem, waveSystem);
 
@@ -207,6 +213,8 @@ function startGame() {
     screenEffects.flashKill(gameState.kills);
     gameState.showNotification('击落敌机！');
     waveSystem.addPlayerKill(); // 通知关卡系统
+    // 击杀掉落盲盒
+    if (powerUpSystem) powerUpSystem.tryKillDrop(pos);
   };
 
   // 敌机被敌机击杀 → 爆炸特效 + 音效（不计分）
@@ -247,6 +255,11 @@ function startGame() {
     audioManager.playExplosion();
   };
 
+  // 关卡完成 → 盲盒关卡奖励
+  waveSystem.onLevelComplete = (level) => {
+    if (powerUpSystem) powerUpSystem.grantLevelReward(level);
+  };
+
   // 启动波次系统（替代手动 spawnWave）
   waveSystem.start();
 
@@ -274,6 +287,9 @@ function startGame() {
       // 6. 碰撞检测
       collisionSystem.update(dt);
 
+      // 6.5 道具盲盒系统更新
+      powerUpSystem.update(dt);
+
       // 7. 粒子特效更新
       particleSystem.update(dt);
 
@@ -291,7 +307,7 @@ function startGame() {
       cameraSystem.update(dt);
 
       // 10. HUD 更新
-      hudSystem.update(dt, waveSystem);
+      hudSystem.update(dt, waveSystem, powerUpSystem);
 
       // 11. 雷达更新
       radarSystem.update(dt);
@@ -329,6 +345,8 @@ function handleHotkeys() {
     player.respawn();
     gameState.respawn();
     game.timeScale = 1.0; // 恢复正常速度
+    // 清除所有 buff
+    if (powerUpSystem) powerUpSystem.clearAllBuffs();
     if (screenEffects) {
       screenEffects.showRespawn();
       screenEffects.hideLevelResult();

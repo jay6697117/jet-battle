@@ -227,6 +227,10 @@ export class AISystem {
     if (enemy._fireTimer <= 0) {
       this._enemyFireAtTarget(enemy, target);
       enemy._fireTimer = 1 / CONFIG.enemy.fireRate;
+      // 时间减速 buff 时射速减半
+      if (this.player._buffTimeSlow) {
+        enemy._fireTimer *= 2;
+      }
     }
   }
 
@@ -259,8 +263,12 @@ export class AISystem {
     const lookTarget = enemy.mesh.position.clone().add(currentForward);
     enemy.mesh.lookAt(lookTarget);
 
-    // 移动
-    enemy.mesh.position.add(currentForward.multiplyScalar(speed * dt));
+    // 移动（时间减速 buff 时速度减半）
+    let actualSpeed = speed;
+    if (this.player._buffTimeSlow) {
+      actualSpeed *= 0.5;
+    }
+    enemy.mesh.position.add(currentForward.multiplyScalar(actualSpeed * dt));
 
     // 获取地表精确高度
     let groundHeight = 10;

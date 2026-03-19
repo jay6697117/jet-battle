@@ -56,8 +56,9 @@ export class WeaponSystem {
         p.heat = 50; // 过热恢复后热度降到 50%
       }
     } else {
-      // 自然冷却
-      p.heat = clamp(p.heat - gc.cooldownRate * dt, 0, 100);
+      // 自然冷却（冷却强化 buff 时速率 ×3）
+      const coolRate = p._buffCooldown ? gc.cooldownRate * 3 : gc.cooldownRate;
+      p.heat = clamp(p.heat - coolRate * dt, 0, 100);
     }
 
     // === 机枪射击（键盘 Space 或触摸射击按钮） ===
@@ -157,14 +158,17 @@ export class WeaponSystem {
     const p = this.player;
     const gc = CONFIG.weapons.gun;
 
-    // 增加热度
-    p.heat = clamp(p.heat + gc.heatPerShot, 0, 100);
+    // 不过热 buff：跳过热度累积
+    if (!p._buffNoOverheat) {
+      // 增加热度
+      p.heat = clamp(p.heat + gc.heatPerShot, 0, 100);
 
-    // 过热检测
-    if (p.heat >= 100) {
-      p.isOverheated = true;
-      p.overheatTimer = gc.overheatLockTime;
-      return;
+      // 过热检测
+      if (p.heat >= 100) {
+        p.isOverheated = true;
+        p.overheatTimer = gc.overheatLockTime;
+        return;
+      }
     }
 
     // 计算发射位置（机头前方）
@@ -180,8 +184,22 @@ export class WeaponSystem {
     dir.normalize();
 
     const bullet = new Bullet(spawnPos, dir, 'player');
+    if (p._buffDoubleDamage) bullet.damage *= 2;
     this.bullets.push(bullet);
     this.scene.add(bullet.mesh);
+
+    // 散射子弹 buff：额外发射左右两条子弹（±5° 扇形）
+    if (p._buffScatterShot) {
+      const up = p.getUp();
+      for (const angle of [-0.087, 0.087]) {
+        const scatterDir = dir.clone();
+        scatterDir.applyAxisAngle(up, angle);
+        const extraBullet = new Bullet(spawnPos.clone(), scatterDir, 'player');
+        if (p._buffDoubleDamage) extraBullet.damage *= 2;
+        this.bullets.push(extraBullet);
+        this.scene.add(extraBullet.mesh);
+      }
+    }
 
     // 音频回调
     if (this.onGunFire) this.onGunFire();

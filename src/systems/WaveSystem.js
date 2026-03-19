@@ -23,13 +23,16 @@ export class WaveSystem {
     this._requiredKills = 0;     // 本关所需最低击杀数
     this._levelState = 'idle';   // idle | fighting | complete | failed
 
+    // 回调
+    this.onLevelComplete = null;  // 过关回调
+
     // 关卡配置表
     this._levelConfigs = [
-      { enemies: 5,  killPercent: 0.20, health: 20, speed: 35, fireRate: 1.0 },
-      { enemies: 8,  killPercent: 0.25, health: 25, speed: 40, fireRate: 1.2 },
-      { enemies: 12, killPercent: 0.33, health: 30, speed: 45, fireRate: 1.5 },
-      { enemies: 16, killPercent: 0.31, health: 35, speed: 50, fireRate: 1.8 },
-      { enemies: 20, killPercent: 0.35, health: 40, speed: 55, fireRate: 2.0 },
+      { enemies: 5,  killPercent: 0.10, health: 20, speed: 35, fireRate: 1.0 },
+      { enemies: 8,  killPercent: 0.12, health: 25, speed: 40, fireRate: 1.2 },
+      { enemies: 12, killPercent: 0.15, health: 30, speed: 45, fireRate: 1.5 },
+      { enemies: 16, killPercent: 0.18, health: 35, speed: 50, fireRate: 1.8 },
+      { enemies: 20, killPercent: 0.20, health: 40, speed: 55, fireRate: 2.0 },
     ];
   }
 
@@ -59,7 +62,7 @@ export class WaveSystem {
     const extra = level - this._levelConfigs.length;
     return {
       enemies: 20 + extra * 2,
-      killPercent: 0.40,
+      killPercent: 0.25,
       health: 40 + extra * 5,
       speed: 55 + extra * 5,
       fireRate: Math.min(2.0 + extra * 0.2, 5.0),
@@ -140,6 +143,10 @@ export class WaveSystem {
           this._levelState = 'complete';
           if (this.screenEffects) {
             this.screenEffects.showLevelComplete(this.currentWave);
+          }
+          // 触发过关回调（用于盲盒关卡奖励）
+          if (this.onLevelComplete) {
+            this.onLevelComplete(this.currentWave);
           }
           // 进入下一关倒计时
           this._betweenWaves = true;

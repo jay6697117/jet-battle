@@ -94,7 +94,7 @@ export class CollisionSystem {
    * 敌机子弹 vs 玩家
    */
   _checkEnemyBulletsVsPlayer() {
-    if (this.player.isDestroyed) return;
+    if (this.player.isDestroyed || this.player._buffInvincible) return;
 
     const bullets = this.aiSystem.getEnemyBullets();
 
@@ -157,7 +157,10 @@ export class CollisionSystem {
       const dist = this.player.mesh.position.distanceTo(enemy.mesh.position);
       if (dist < this._jetCollisionRadius) {
         // 双方都受伤
-        this.player.takeDamage(30);
+        // 无敌护甲 buff 时跳过玩家伤害
+        if (!this.player._buffInvincible) {
+          this.player.takeDamage(30);
+        }
         enemy.takeDamage(30);
 
         if (this.onPlayerHit) this.onPlayerHit();

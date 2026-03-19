@@ -63,7 +63,10 @@ export class FlightPhysics {
                       (touch && touch.isBoosting);
     if (wantBoost && player.boostEnergy > 0) {
       player.isBoosting = true;
-      player.boostEnergy = clamp(player.boostEnergy - bc.consumeRate * dt, 0, 100);
+      // 无限加力 buff 时不消耗能量
+      if (!player._buffInfiniteBoost) {
+        player.boostEnergy = clamp(player.boostEnergy - bc.consumeRate * dt, 0, 100);
+      }
       this._boostCooldown = bc.rechargeDelay;
     } else {
       player.isBoosting = false;
@@ -77,6 +80,11 @@ export class FlightPhysics {
     // === 2. 目标速度计算 ===
     const throttlePercent = fc.throttleLevels[player.throttleIndex];
     let targetSpeed = fc.minSpeed + (fc.maxSpeed - fc.minSpeed) * throttlePercent;
+
+    // 高速飞行 buff
+    if (player._buffSpeedBoost) {
+      targetSpeed *= 1.8;
+    }
 
     if (player.isBoosting) {
       targetSpeed *= bc.multiplier;
