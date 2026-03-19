@@ -22,6 +22,14 @@ export class Missile {
     // 上一帧目标方位（用于计算视线角速度）
     this._lastLOS = null;
 
+    // 预分配临时向量，避免每帧 new/clone
+    this._tmpMove = new THREE.Vector3();
+    this._tmpLookAt = new THREE.Vector3();
+    this._tmpToTarget = new THREE.Vector3();
+    this._tmpTargetVelocity = new THREE.Vector3();
+    this._tmpPredictedPos = new THREE.Vector3();
+    this._tmpToFlare = new THREE.Vector3();
+
     // 导弹网格
     const group = new THREE.Group();
 
@@ -84,10 +92,11 @@ export class Missile {
       this._guidanceUpdate(dt);
     }
 
-    // 移动
-    const move = this._direction.clone().multiplyScalar(this._speed * dt);
-    this.mesh.position.add(move);
-    this.mesh.lookAt(this.mesh.position.clone().add(this._direction));
+    // 移动（复用临时向量）
+    this._tmpMove.copy(this._direction).multiplyScalar(this._speed * dt);
+    this.mesh.position.add(this._tmpMove);
+    this._tmpLookAt.copy(this.mesh.position).add(this._direction);
+    this.mesh.lookAt(this._tmpLookAt);
 
     // 尾焰闪烁
     if (this._flame) {
@@ -116,37 +125,35 @@ export class Missile {
     const distToTarget = missilePos.distanceTo(targetPos);
 
     // —— 预判拦截点计算 ——
-    // 估算目标速度向量
-    let targetVelocity = new THREE.Vector3(0, 0, 0);
+    // 估算目标速度向量（复用临时向量）
+    this._tmpTargetVelocity.set(0, 0, 0);
     if (this.target.getForward) {
-      // 目标有前进方向和速度的话，计算速度向量
       const targetSpeed = this.target.speed || CONFIG.enemy.speed;
-      targetVelocity = this.target.getForward().multiplyScalar(targetSpeed);
+      this._tmpTargetVelocity.copy(this.target.getForward()).multiplyScalar(targetSpeed);
     }
 
     // 预估飞行时间 = 距离 / 导弹速度
     const timeToIntercept = distToTarget / this._speed;
 
-    // 目标预判位置 = 当前位置 + 速度 * 预飞时间 * 预判系数
-    const predictedPos = targetPos.clone().add(
-      targetVelocity.multiplyScalar(timeToIntercept * this._leadFactor)
+    // 目标预判位置（复用临时向量）
+    this._tmpPredictedPos.copy(targetPos).add(
+      this._tmpTargetVelocity.multiplyScalar(timeToIntercept * this._leadFactor)
     );
 
     // —— 比例导航制导 ——
-    const toTarget = new THREE.Vector3();
-    toTarget.subVectors(predictedPos, missilePos).normalize();
+    this._tmpToTarget.subVectors(this._tmpPredictedPos, missilePos).normalize();
 
     // 根据距离调整追踪力度 — 越近追踪越强
     let trackingMultiplier = 1.0;
     if (distToTarget < 100) {
-      trackingMultiplier = 2.5; // 近距离大力追踪
+      trackingMultiplier = 2.5;
     } else if (distToTarget < 300) {
       trackingMultiplier = 1.8;
     }
 
-    // 转向目标（使用较高的 turnRate 确保命中）
+    // 转向目标
     const turnAmount = this._turnRate * trackingMultiplier * dt;
-    this._direction.lerp(toTarget, Math.min(turnAmount, 1.0));
+    this._direction.lerp(this._tmpToTarget, Math.min(turnAmount, 1.0));
     this._direction.normalize();
   }
 
@@ -155,10 +162,9 @@ export class Missile {
    */
   divertToFlare(flarePosition) {
     this.target = null; // 丢失原目标
-    // 指向干扰弹
-    const toFlare = new THREE.Vector3();
-    toFlare.subVectors(flarePosition, this.mesh.position).normalize();
-    this._direction.copy(toFlare);
+    // 指向干扰弹（复用临时向量）
+    this._tmpToFlare.subVectors(flarePosition, this.mesh.position).normalize();
+    this._direction.copy(this._tmpToFlare);
   }
 
   /**

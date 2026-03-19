@@ -18,6 +18,9 @@ export class Terrain {
     this._createLakes();
     this._createBuildings();
     this._createGrassPatches();
+
+    // 构建障碍物高度缓存网格（一次性计算，供 AI 地面碰撞使用）
+    this._buildObstacleGrid();
   }
 
   // =============================================
@@ -502,29 +505,86 @@ export class Terrain {
   }
 
   // =============================================
-  // 辅助：获取某坐标精确地表高度（包括山体/建筑等）
+  // 辅助：快速近似地表高度（纯数学，零 GPU 开销）
+  // 用于 AI 敌机地面碰撞检测，替代昂贵的 Raycaster
+  // =============================================
+  getApproxHeight(x, z) {
+    // 基础地形高度（正弦波组合）
+    let h = this._heightAt(x, z);
+
+    // 查询障碍物缓存网格
+    if (this._obstacleGrid) {
+      const gridX = Math.floor((x + this._gridHalfSize) / this._gridCellSize);
+      const gridZ = Math.floor((z + this._gridHalfSize) / this._gridCellSize);
+      if (gridX >= 0 && gridX < this._gridRes && gridZ >= 0 && gridZ < this._gridRes) {
+        const cachedH = this._obstacleGrid[gridZ * this._gridRes + gridX];
+        if (cachedH > h) h = cachedH;
+      }
+    }
+
+    return h;
+  }
+
+  // =============================================
+  // 构建障碍物高度缓存网格（初始化时一次性计算）
+  // =============================================
+  _buildObstacleGrid() {
+    // 网格覆盖范围和分辨率
+    this._gridCellSize = 100;    // 每格 100 单位
+    this._gridHalfSize = 10000;  // 覆盖 -10000 到 +10000
+    this._gridRes = Math.ceil(this._gridHalfSize * 2 / this._gridCellSize); // 200x200
+
+    this._obstacleGrid = new Float32Array(this._gridRes * this._gridRes);
+
+    // 遍历所有 InstancedMesh，将其高度写入网格
+    const dummy = new THREE.Matrix4();
+    const pos = new THREE.Vector3();
+    const scale = new THREE.Vector3();
+    const quat = new THREE.Quaternion();
+
+    for (const instMesh of this._instancedMeshes) {
+      for (let i = 0; i < instMesh.count; i++) {
+        instMesh.getMatrixAt(i, dummy);
+        dummy.decompose(pos, quat, scale);
+
+        // 估算此实例的顶部高度
+        const topY = pos.y + scale.y * 0.5;
+
+        // 写入对应网格单元（取最大值）
+        const gridX = Math.floor((pos.x + this._gridHalfSize) / this._gridCellSize);
+        const gridZ = Math.floor((pos.z + this._gridHalfSize) / this._gridCellSize);
+
+        if (gridX >= 0 && gridX < this._gridRes && gridZ >= 0 && gridZ < this._gridRes) {
+          const idx = gridZ * this._gridRes + gridX;
+          if (topY > this._obstacleGrid[idx]) {
+            this._obstacleGrid[idx] = topY;
+          }
+
+          // 扩大影响范围（根据 XZ 缩放扩展到相邻格子）
+          const radiusCells = Math.ceil(Math.max(scale.x, scale.z) * 0.5 / this._gridCellSize);
+          for (let dz = -radiusCells; dz <= radiusCells; dz++) {
+            for (let dx = -radiusCells; dx <= radiusCells; dx++) {
+              const gx = gridX + dx;
+              const gz = gridZ + dz;
+              if (gx >= 0 && gx < this._gridRes && gz >= 0 && gz < this._gridRes) {
+                const gIdx = gz * this._gridRes + gx;
+                if (topY > this._obstacleGrid[gIdx]) {
+                  this._obstacleGrid[gIdx] = topY;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // =============================================
+  // 辅助：获取某坐标精确地表高度（Raycaster 版，仅在需要精确值时使用）
   // =============================================
   getSurfaceHeight(x, z) {
-    if (!this._raycaster) {
-      this._raycaster = new THREE.Raycaster();
-      this._downDir = new THREE.Vector3(0, -1, 0);
-      this._rayOrigin = new THREE.Vector3();
-      // 让射线检测尽可能优化
-      this._raycaster.firstHitOnly = true; 
-    }
-
-    this._rayOrigin.set(x, 5000, z);
-    this._raycaster.set(this._rayOrigin, this._downDir);
-
-    const objects = [this.terrainMesh, ...this._instancedMeshes];
-    const intersects = this._raycaster.intersectObjects(objects, false);
-
-    if (intersects.length > 0) {
-      return intersects[0].point.y;
-    }
-
-    // 默认回退到基础地形高度
-    return this._heightAt(x, z);
+    // 优先使用快速近似版
+    return this.getApproxHeight(x, z);
   }
 
   /**

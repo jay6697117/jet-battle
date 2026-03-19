@@ -64,24 +64,72 @@ export class World {
   }
 
   /**
-   * 创建海面
+   * 创建海面 — 使用 GPU Shader 实现波浪动画，零 JS 开销
    */
   _createOcean() {
     const size = CONFIG.world.groundSize;
     const oceanGeo = new THREE.PlaneGeometry(size, size, 64, 64);
-    const oceanMat = new THREE.MeshStandardMaterial({
-      color: 0x006994,
-      roughness: 0.3,
-      metalness: 0.1,
+
+    // 使用 ShaderMaterial 实现 GPU 端波浪
+    const oceanMat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uColor: { value: new THREE.Color(0x006994) },
+        uOpacity: { value: 0.85 },
+        // 光照相关 uniforms
+        uAmbientColor: { value: new THREE.Color(0x8899bb) },
+        uSunDir: { value: new THREE.Vector3(200, 400, 300).normalize() },
+        uSunColor: { value: new THREE.Color(0xffffee) },
+      },
+      vertexShader: `
+        uniform float uTime;
+        varying vec3 vNormal;
+        varying vec3 vWorldPos;
+
+        void main() {
+          vec3 pos = position;
+          // 与原来相同的波浪公式，但在 GPU 执行
+          pos.z = sin(pos.x * 0.01 + uTime * 0.5) * 1.5 +
+                  cos(pos.y * 0.015 + uTime * 0.3) * 1.0;
+
+          // 近似法线计算
+          float dx = cos(pos.x * 0.01 + uTime * 0.5) * 0.015;
+          float dz = -sin(pos.y * 0.015 + uTime * 0.3) * 0.015;
+          vNormal = normalize(vec3(-dx, 1.0, -dz));
+
+          vWorldPos = (modelMatrix * vec4(pos, 1.0)).xyz;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uColor;
+        uniform float uOpacity;
+        uniform vec3 uAmbientColor;
+        uniform vec3 uSunDir;
+        uniform vec3 uSunColor;
+        varying vec3 vNormal;
+        varying vec3 vWorldPos;
+
+        void main() {
+          // 简单的漫反射光照
+          float diffuse = max(dot(vNormal, uSunDir), 0.0);
+          vec3 light = uAmbientColor * 0.5 + uSunColor * diffuse * 0.6;
+          vec3 finalColor = uColor * light;
+
+          gl_FragColor = vec4(finalColor, uOpacity);
+        }
+      `,
       transparent: true,
-      opacity: 0.85,
+      side: THREE.DoubleSide,
     });
+
     const ocean = new THREE.Mesh(oceanGeo, oceanMat);
     ocean.rotation.x = -Math.PI / 2;
     ocean.position.y = 0;
     ocean.receiveShadow = true;
     this.scene.add(ocean);
     this.ocean = ocean;
+    this._oceanMat = oceanMat;
   }
 
   /**
@@ -124,16 +172,17 @@ export class World {
   }
 
   /**
-   * 创建体积云
+   * 创建体积云 — 所有 puff 共享同一材质实例
    */
   _createClouds() {
     const cloudGeo = new THREE.SphereGeometry(1, 8, 6);
+    // 共享材质（不再每个 puff clone）
     const cloudMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       roughness: 1.0,
       metalness: 0.0,
       transparent: true,
-      opacity: 0.8,
+      opacity: 0.7,  // 统一透明度（取中间值，视觉差异不明显）
       flatShading: true,
     });
 
@@ -143,7 +192,8 @@ export class World {
       // 每朵云由多个球体组成
       const puffs = randFloat(3, 7);
       for (let j = 0; j < puffs; j++) {
-        const puff = new THREE.Mesh(cloudGeo, cloudMat.clone());
+        // 所有 puff 共享同一材质实例
+        const puff = new THREE.Mesh(cloudGeo, cloudMat);
         const scale = randFloat(20, 60);
         puff.scale.set(scale, scale * 0.5, scale * 0.7);
         puff.position.set(
@@ -151,8 +201,6 @@ export class World {
           randFloat(-10, 10),
           randFloat(-40, 40)
         );
-        // 稍微调整每个 puff 的透明度
-        puff.material.opacity = randFloat(0.5, 0.9);
         cloudGroup.add(puff);
       }
 
@@ -168,20 +216,12 @@ export class World {
   }
 
   /**
-   * 每帧更新（例如波浪动画）
+   * 每帧更新
    */
   update(dt, elapsed) {
-    // 海面波浪动画
-    if (this.ocean) {
-      const positions = this.ocean.geometry.attributes.position;
-      for (let i = 0; i < positions.count; i++) {
-        const x = positions.getX(i);
-        const z = positions.getZ(i);
-        const y = Math.sin(x * 0.01 + elapsed * 0.5) * 1.5 +
-                  Math.cos(z * 0.015 + elapsed * 0.3) * 1.0;
-        positions.setY(i, y);
-      }
-      positions.needsUpdate = true;
+    // 海面波浪 — 只需更新 uniform，GPU 自动计算
+    if (this._oceanMat) {
+      this._oceanMat.uniforms.uTime.value = elapsed;
     }
 
     // 地形更新

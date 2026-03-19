@@ -8,6 +8,8 @@ import { Bullet } from '../entities/Bullet.js';
  * AI 行为系统
  * 管理所有 AI 敌机的行为状态和射击
  * 支持敌机之间互相攻击（混战模式）
+ *
+ * 性能优化：预分配临时向量、缓存列表避免每帧 filter
  */
 export class AISystem {
   constructor(scene, player, weaponSystem, terrain) {
@@ -20,6 +22,26 @@ export class AISystem {
 
     // 边界回收距离
     this._maxDistFromPlayer = 1500;
+
+    // 预分配复用向量，避免每帧 new
+    this._tmpVec = new THREE.Vector3();
+    this._tmpDir = new THREE.Vector3();
+    this._tmpToTarget = new THREE.Vector3();
+    this._tmpAway = new THREE.Vector3();
+    this._tmpEvadeTarget = new THREE.Vector3();
+    this._tmpLookTarget = new THREE.Vector3();
+    this._tmpForward = new THREE.Vector3();
+    this._tmpSpawnPos = new THREE.Vector3();
+    this._tmpBulletDir = new THREE.Vector3();
+    this._tmpToTargetNorm = new THREE.Vector3();
+
+    // 缓存的存活敌机列表（避免每帧 filter）
+    this._cachedAliveEnemies = [];
+    this._cachedAliveEnemiesDirty = true;
+
+    // 缓存的存活子弹列表
+    this._cachedAliveBullets = [];
+    this._cachedAliveBulletsDirty = true;
   }
 
   /**
@@ -43,6 +65,7 @@ export class AISystem {
       this.scene.add(enemy.mesh);
     }
 
+    this._cachedAliveEnemiesDirty = true;
     return count;
   }
 
@@ -51,6 +74,7 @@ export class AISystem {
    */
   update(dt) {
     const player = this.player;
+    let listChanged = false;
 
     for (let i = this.enemies.length - 1; i >= 0; i--) {
       const enemy = this.enemies[i];
@@ -58,6 +82,7 @@ export class AISystem {
       if (enemy.isDestroyed) {
         this.scene.remove(enemy.mesh);
         this.enemies.splice(i, 1);
+        listChanged = true;
         continue;
       }
 
@@ -67,14 +92,12 @@ export class AISystem {
       // 找到最近的目标（玩家或其他敌机）
       const target = this._findNearestTarget(enemy);
       if (!target) {
-        // 没有目标就巡逻
         this._doPatrol(enemy, dt);
         continue;
       }
 
-      const toTarget = new THREE.Vector3();
-      toTarget.subVectors(target.mesh.position, enemy.mesh.position);
-      const distToTarget = toTarget.length();
+      this._tmpToTarget.subVectors(target.mesh.position, enemy.mesh.position);
+      const distToTarget = this._tmpToTarget.length();
 
       // 状态转换逻辑
       this._updateState(enemy, distToTarget, dt);
@@ -96,6 +119,10 @@ export class AISystem {
       }
     }
 
+    if (listChanged) {
+      this._cachedAliveEnemiesDirty = true;
+    }
+
     // 更新敌机子弹
     this._updateEnemyBullets(dt);
   }
@@ -106,10 +133,9 @@ export class AISystem {
   _boundaryCheck(enemy) {
     const dist = enemy.mesh.position.distanceTo(this.player.mesh.position);
     if (dist > this._maxDistFromPlayer) {
-      // 重设巡逻路径到玩家附近
       const pPos = this.player.mesh.position;
       const angle = Math.random() * Math.PI * 2;
-      const newCenter = new THREE.Vector3(
+      const newCenter = this._tmpVec.set(
         pPos.x + Math.cos(angle) * 200,
         randFloat(200, 500),
         pPos.z + Math.sin(angle) * 200
@@ -125,13 +151,13 @@ export class AISystem {
    */
   _findNearestTarget(enemy) {
     let nearest = null;
-    let nearestDist = Infinity;
+    let nearestDistSq = Infinity;
 
-    // 检查玩家
+    // 检查玩家（使用 distanceToSquared 避免 sqrt）
     if (!this.player.isDestroyed) {
-      const distToPlayer = enemy.mesh.position.distanceTo(this.player.mesh.position);
-      if (distToPlayer < nearestDist) {
-        nearestDist = distToPlayer;
+      const distSq = enemy.mesh.position.distanceToSquared(this.player.mesh.position);
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq;
         nearest = this.player;
       }
     }
@@ -139,9 +165,9 @@ export class AISystem {
     // 检查其他敌机
     for (const other of this.enemies) {
       if (other === enemy || other.isDestroyed) continue;
-      const dist = enemy.mesh.position.distanceTo(other.mesh.position);
-      if (dist < nearestDist) {
-        nearestDist = dist;
+      const distSq = enemy.mesh.position.distanceToSquared(other.mesh.position);
+      if (distSq < nearestDistSq) {
+        nearestDistSq = distSq;
         nearest = other;
       }
     }
@@ -177,14 +203,12 @@ export class AISystem {
           enemy.state = 'chase';
           enemy._stateTimer = 0;
         }
-        // 如果被打到血量低，切换到回避
         if (enemy.health < ec.maxHealth * 0.3) {
           enemy.state = 'evade';
           enemy._stateTimer = 0;
         }
         break;
       case 'evade':
-        // 回避 3 秒后恢复追击
         if (enemy._stateTimer > 3.0) {
           enemy.state = 'chase';
           enemy._stateTimer = 0;
@@ -200,7 +224,6 @@ export class AISystem {
     const wp = enemy._waypoints[enemy._waypointIndex];
     this._flyTowards(enemy, wp, dt, enemy.speed);
 
-    // 到达路径点附近时切换到下一个
     const dist = enemy.mesh.position.distanceTo(wp);
     if (dist < 30) {
       enemy._waypointIndex = (enemy._waypointIndex + 1) % enemy._waypoints.length;
@@ -218,16 +241,13 @@ export class AISystem {
    * 攻击行为 — 保持瞄准并射击
    */
   _doAttack(enemy, target, distToTarget, dt) {
-    // 朝目标飞但保持一定距离
-    const targetPos = target.mesh.position.clone();
-    this._flyTowards(enemy, targetPos, dt, enemy.speed * 0.8);
+    this._flyTowards(enemy, target.mesh.position, dt, enemy.speed * 0.8);
 
     // 射击
     enemy._fireTimer -= dt;
     if (enemy._fireTimer <= 0) {
       this._enemyFireAtTarget(enemy, target);
       enemy._fireTimer = 1 / CONFIG.enemy.fireRate;
-      // 时间减速 buff 时射速减半
       if (this.player._buffTimeSlow) {
         enemy._fireTimer *= 2;
       }
@@ -238,48 +258,48 @@ export class AISystem {
    * 回避行为 — 远离目标
    */
   _doEvade(enemy, target, dt) {
-    // 飞向远离目标的方向
-    const away = new THREE.Vector3();
-    away.subVectors(enemy.mesh.position, target.mesh.position).normalize();
-    const evadeTarget = enemy.mesh.position.clone().add(away.multiplyScalar(200));
-    evadeTarget.y = clamp(evadeTarget.y + randFloat(-50, 100), 100, 600);
+    this._tmpAway.subVectors(enemy.mesh.position, target.mesh.position).normalize();
+    this._tmpEvadeTarget.copy(enemy.mesh.position).add(this._tmpAway.multiplyScalar(200));
+    this._tmpEvadeTarget.y = clamp(this._tmpEvadeTarget.y + randFloat(-50, 100), 100, 600);
 
-    this._flyTowards(enemy, evadeTarget, dt, enemy.speed * 1.3);
+    this._flyTowards(enemy, this._tmpEvadeTarget, dt, enemy.speed * 1.3);
   }
 
   /**
-   * 通用飞向目标逻辑
+   * 通用飞向目标逻辑（复用预分配向量）
    */
   _flyTowards(enemy, target, dt, speed) {
-    const dir = new THREE.Vector3();
-    dir.subVectors(target, enemy.mesh.position).normalize();
+    this._tmpDir.subVectors(target, enemy.mesh.position).normalize();
 
-    // 平滑转向
-    const currentForward = enemy.getForward();
-    currentForward.lerp(dir, 2.0 * dt);
-    currentForward.normalize();
+    // 平滑转向（就地修改 forward）
+    this._tmpForward.copy(enemy.getForward());
+    this._tmpForward.lerp(this._tmpDir, 2.0 * dt);
+    this._tmpForward.normalize();
 
     // 朝向目标
-    const lookTarget = enemy.mesh.position.clone().add(currentForward);
-    enemy.mesh.lookAt(lookTarget);
+    this._tmpLookTarget.copy(enemy.mesh.position).add(this._tmpForward);
+    enemy.mesh.lookAt(this._tmpLookTarget);
 
     // 移动（时间减速 buff 时速度减半）
     let actualSpeed = speed;
     if (this.player._buffTimeSlow) {
       actualSpeed *= 0.5;
     }
-    enemy.mesh.position.add(currentForward.multiplyScalar(actualSpeed * dt));
+    // 就地缩放并移动
+    this._tmpDir.copy(this._tmpForward).multiplyScalar(actualSpeed * dt);
+    enemy.mesh.position.add(this._tmpDir);
 
-    // 获取地表精确高度
+    // 获取地表高度 — 使用数学函数代替 Raycaster
     let groundHeight = 10;
     if (this.terrain) {
-      groundHeight = Math.max(10, this.terrain.getSurfaceHeight(enemy.mesh.position.x, enemy.mesh.position.z));
+      groundHeight = Math.max(10, this.terrain.getApproxHeight(enemy.mesh.position.x, enemy.mesh.position.z));
     }
 
     // 地面/山体碰撞坠毁
     if (enemy.mesh.position.y < groundHeight + 2 && !enemy.isDestroyed) {
       enemy.mesh.position.y = groundHeight;
-      enemy.takeDamage(9999); // 直接击杀
+      enemy.takeDamage(9999);
+      this._cachedAliveEnemiesDirty = true;
       if (this.onEnemyGroundCrash) {
         this.onEnemyGroundCrash(enemy.mesh.position.clone());
       }
@@ -287,54 +307,75 @@ export class AISystem {
   }
 
   /**
-   * 敌机射击 — 通用版，可以朝任何目标射击
+   * 敌机射击（复用向量）
    */
   _enemyFireAtTarget(enemy, target) {
-    const forward = enemy.getForward();
-    const spawnPos = enemy.mesh.position.clone().add(forward.clone().multiplyScalar(6));
+    this._tmpForward.copy(enemy.getForward());
+    this._tmpSpawnPos.copy(enemy.mesh.position).add(
+      this._tmpDir.copy(this._tmpForward).multiplyScalar(6)
+    );
 
-    // 给子弹一点偏移（AI 不完全精确）
-    const toTarget = new THREE.Vector3();
-    toTarget.subVectors(target.mesh.position, spawnPos).normalize();
+    // 瞄准方向
+    this._tmpToTargetNorm.subVectors(target.mesh.position, this._tmpSpawnPos).normalize();
 
-    // 混合前方和指向目标的方向（模拟瞄准误差）
-    const dir = forward.clone().lerp(toTarget, 0.6); // 降低瞄准精度
+    // 混合前方和指向目标的方向
+    this._tmpBulletDir.copy(this._tmpForward).lerp(this._tmpToTargetNorm, 0.6);
     const spread = CONFIG.enemy.accuracy || 0.08;
-    dir.x += (Math.random() - 0.5) * spread;
-    dir.y += (Math.random() - 0.5) * spread;
-    dir.z += (Math.random() - 0.5) * spread;
-    dir.normalize();
+    this._tmpBulletDir.x += (Math.random() - 0.5) * spread;
+    this._tmpBulletDir.y += (Math.random() - 0.5) * spread;
+    this._tmpBulletDir.z += (Math.random() - 0.5) * spread;
+    this._tmpBulletDir.normalize();
 
-    const bullet = new Bullet(spawnPos, dir, 'enemy');
+    const bullet = new Bullet(this._tmpSpawnPos.clone(), this._tmpBulletDir.clone(), 'enemy');
     this._enemyBullets.push(bullet);
     this.scene.add(bullet.mesh);
+    this._cachedAliveBulletsDirty = true;
   }
 
   /**
    * 更新敌机子弹
    */
   _updateEnemyBullets(dt) {
+    let changed = false;
     for (let i = this._enemyBullets.length - 1; i >= 0; i--) {
       const b = this._enemyBullets[i];
       b.update(dt);
       if (b.isDestroyed) {
         this.scene.remove(b.mesh);
         this._enemyBullets.splice(i, 1);
+        changed = true;
       }
+    }
+    if (changed) {
+      this._cachedAliveBulletsDirty = true;
     }
   }
 
   /**
-   * 获取所有敌机子弹（供碰撞检测用）
+   * 获取所有敌机子弹（缓存版本）
    */
   getEnemyBullets() {
-    return this._enemyBullets.filter(b => !b.isDestroyed);
+    if (this._cachedAliveBulletsDirty) {
+      this._cachedAliveBullets = [];
+      for (const b of this._enemyBullets) {
+        if (!b.isDestroyed) this._cachedAliveBullets.push(b);
+      }
+      this._cachedAliveBulletsDirty = false;
+    }
+    return this._cachedAliveBullets;
   }
 
   /**
-   * 获取存活敌机列表
+   * 获取存活敌机列表（缓存版本）
    */
   getAliveEnemies() {
-    return this.enemies.filter(e => !e.isDestroyed);
+    if (this._cachedAliveEnemiesDirty) {
+      this._cachedAliveEnemies = [];
+      for (const e of this.enemies) {
+        if (!e.isDestroyed) this._cachedAliveEnemies.push(e);
+      }
+      this._cachedAliveEnemiesDirty = false;
+    }
+    return this._cachedAliveEnemies;
   }
 }

@@ -37,7 +37,21 @@ export class WeaponSystem {
     this.onGunFire = null;
     this.onMissileLaunch = null;
     this.onFlareRelease = null;
-    this.onMissileLockFail = null; // 未锁定尝试发射的回调
+    this.onMissileLockFail = null;
+
+    // 预分配复用向量，避免 _fireGun 中的 clone
+    this._tmpForward = new THREE.Vector3();
+    this._tmpSpawnPos = new THREE.Vector3();
+    this._tmpDir = new THREE.Vector3();
+    this._tmpUp = new THREE.Vector3();
+    this._tmpScatterDir = new THREE.Vector3();
+    this._tmpBackward = new THREE.Vector3();
+
+    // 缓存列表（避免每帧 filter）
+    this._cachedPlayerBullets = [];
+    this._cachedPlayerBulletsDirty = true;
+    this._cachedPlayerMissiles = [];
+    this._cachedPlayerMissilesDirty = true;
   }
 
   /**
@@ -160,10 +174,7 @@ export class WeaponSystem {
 
     // 不过热 buff：跳过热度累积
     if (!p._buffNoOverheat) {
-      // 增加热度
       p.heat = clamp(p.heat + gc.heatPerShot, 0, 100);
-
-      // 过热检测
       if (p.heat >= 100) {
         p.isOverheated = true;
         p.overheatTimer = gc.overheatLockTime;
@@ -171,37 +182,37 @@ export class WeaponSystem {
       }
     }
 
-    // 计算发射位置（机头前方）
-    const forward = p.getForward();
-    const spawnPos = p.mesh.position.clone().add(forward.clone().multiplyScalar(10));
+    // 计算发射位置（复用向量）
+    this._tmpForward.set(0, 0, 1).applyQuaternion(p.mesh.quaternion);
+    this._tmpSpawnPos.copy(p.mesh.position).addScaledVector(this._tmpForward, 10);
 
     // 添加轻微随机散布
     const spread = 0.02;
-    const dir = forward.clone();
-    dir.x += (Math.random() - 0.5) * spread;
-    dir.y += (Math.random() - 0.5) * spread;
-    dir.z += (Math.random() - 0.5) * spread;
-    dir.normalize();
+    this._tmpDir.copy(this._tmpForward);
+    this._tmpDir.x += (Math.random() - 0.5) * spread;
+    this._tmpDir.y += (Math.random() - 0.5) * spread;
+    this._tmpDir.z += (Math.random() - 0.5) * spread;
+    this._tmpDir.normalize();
 
-    const bullet = new Bullet(spawnPos, dir, 'player');
+    const bullet = new Bullet(this._tmpSpawnPos.clone(), this._tmpDir.clone(), 'player');
     if (p._buffDoubleDamage) bullet.damage *= 2;
     this.bullets.push(bullet);
     this.scene.add(bullet.mesh);
+    this._cachedPlayerBulletsDirty = true;
 
-    // 散射子弹 buff：额外发射左右两条子弹（±5° 扇形）
+    // 散射子弹 buff
     if (p._buffScatterShot) {
-      const up = p.getUp();
+      this._tmpUp.set(0, 1, 0).applyQuaternion(p.mesh.quaternion);
       for (const angle of [-0.087, 0.087]) {
-        const scatterDir = dir.clone();
-        scatterDir.applyAxisAngle(up, angle);
-        const extraBullet = new Bullet(spawnPos.clone(), scatterDir, 'player');
+        this._tmpScatterDir.copy(this._tmpDir);
+        this._tmpScatterDir.applyAxisAngle(this._tmpUp, angle);
+        const extraBullet = new Bullet(this._tmpSpawnPos.clone(), this._tmpScatterDir.clone(), 'player');
         if (p._buffDoubleDamage) extraBullet.damage *= 2;
         this.bullets.push(extraBullet);
         this.scene.add(extraBullet.mesh);
       }
     }
 
-    // 音频回调
     if (this.onGunFire) this.onGunFire();
   }
 
@@ -212,22 +223,19 @@ export class WeaponSystem {
     const p = this.player;
     p.missiles--;
 
-    const forward = p.getForward();
-    const spawnPos = p.mesh.position.clone().add(forward.clone().multiplyScalar(8));
+    this._tmpForward.set(0, 0, 1).applyQuaternion(p.mesh.quaternion);
+    this._tmpSpawnPos.copy(p.mesh.position).addScaledVector(this._tmpForward, 8);
 
-    // 使用已锁定的目标
     const target = this.lockTarget;
-
-    const missile = new Missile(spawnPos, forward, target, 'player');
+    const missile = new Missile(this._tmpSpawnPos.clone(), this._tmpForward.clone(), target, 'player');
     this.missiles.push(missile);
     this.scene.add(missile.mesh);
+    this._cachedPlayerMissilesDirty = true;
 
-    // 发射后重置锁定状态（每枚导弹都需要重新锁定）
     this.lockTarget = null;
     this.lockProgress = 0;
     this.isLocked = false;
 
-    // 音频回调
     if (this.onMissileLaunch) this.onMissileLaunch();
   }
 
@@ -238,18 +246,14 @@ export class WeaponSystem {
     const p = this.player;
     p.flares--;
 
-    // 从飞机后方释放
-    const backward = p.getForward().multiplyScalar(-5);
-    const spawnPos = p.mesh.position.clone().add(backward);
+    this._tmpBackward.set(0, 0, 1).applyQuaternion(p.mesh.quaternion).multiplyScalar(-5);
+    this._tmpSpawnPos.copy(p.mesh.position).add(this._tmpBackward);
 
-    const flare = new Flare(spawnPos);
+    const flare = new Flare(this._tmpSpawnPos.clone());
     this.flares.push(flare);
     this.scene.add(flare.mesh);
 
-    // 吸引附近的敌方导弹
     this._divertNearbyMissiles(flare);
-
-    // 音频回调
     if (this.onFlareRelease) this.onFlareRelease();
   }
 
@@ -271,24 +275,30 @@ export class WeaponSystem {
    */
   _updateProjectiles(dt) {
     // 更新子弹
+    let bulletChanged = false;
     for (let i = this.bullets.length - 1; i >= 0; i--) {
       const b = this.bullets[i];
       b.update(dt);
       if (b.isDestroyed) {
         this.scene.remove(b.mesh);
         this.bullets.splice(i, 1);
+        bulletChanged = true;
       }
     }
+    if (bulletChanged) this._cachedPlayerBulletsDirty = true;
 
     // 更新导弹
+    let missileChanged = false;
     for (let i = this.missiles.length - 1; i >= 0; i--) {
       const m = this.missiles[i];
       m.update(dt);
       if (m.isDestroyed) {
         this.scene.remove(m.mesh);
         this.missiles.splice(i, 1);
+        missileChanged = true;
       }
     }
+    if (missileChanged) this._cachedPlayerMissilesDirty = true;
 
     // 更新干扰弹
     for (let i = this.flares.length - 1; i >= 0; i--) {
@@ -305,13 +315,27 @@ export class WeaponSystem {
    * 获取所有活跃的玩家子弹（供碰撞检测用）
    */
   getPlayerBullets() {
-    return this.bullets.filter(b => b.owner === 'player' && !b.isDestroyed);
+    if (this._cachedPlayerBulletsDirty) {
+      this._cachedPlayerBullets = [];
+      for (const b of this.bullets) {
+        if (b.owner === 'player' && !b.isDestroyed) this._cachedPlayerBullets.push(b);
+      }
+      this._cachedPlayerBulletsDirty = false;
+    }
+    return this._cachedPlayerBullets;
   }
 
   /**
-   * 获取所有活跃的玩家导弹（供碰撞检测用）
+   * 获取所有活跃的玩家导弹（缓存版本）
    */
   getPlayerMissiles() {
-    return this.missiles.filter(m => m.owner === 'player' && !m.isDestroyed);
+    if (this._cachedPlayerMissilesDirty) {
+      this._cachedPlayerMissiles = [];
+      for (const m of this.missiles) {
+        if (m.owner === 'player' && !m.isDestroyed) this._cachedPlayerMissiles.push(m);
+      }
+      this._cachedPlayerMissilesDirty = false;
+    }
+    return this._cachedPlayerMissiles;
   }
 }

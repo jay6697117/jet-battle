@@ -30,8 +30,28 @@ export class FlightPhysics {
     // 自动导航模式
     this.autoNavEnabled = false;
     this.autoNavTarget = null;
-    this._autoNavCloseDistance = 150; // 到达此距离后自动关闭导航
-    this._autoNavTurnSpeed = 2.0;     // 自动转向速度
+    this._autoNavCloseDistance = 150;
+    this._autoNavTurnSpeed = 2.0;
+
+    // 预分配复用向量/四元数，避免每帧 new
+    this._pitchQ = new THREE.Quaternion();
+    this._yawQ = new THREE.Quaternion();
+    this._rollQ = new THREE.Quaternion();
+    this._moveForward = new THREE.Vector3();
+    this._localRight = new THREE.Vector3();
+    this._localUp = new THREE.Vector3();
+    this._localForward = new THREE.Vector3();
+    this._tmpEuler = new THREE.Euler();
+    this._tmpToTarget = new THREE.Vector3();
+    this._tmpTargetDir = new THREE.Vector3();
+    this._tmpTargetQuat = new THREE.Quaternion();
+    this._tmpLookMat = new THREE.Matrix4();
+    this._tmpEye = new THREE.Vector3();
+    this._tmpCenter = new THREE.Vector3();
+    this._tmpUpVec = new THREE.Vector3(0, 1, 0);
+    this._tmpFlipQuat = new THREE.Quaternion().setFromAxisAngle(
+      new THREE.Vector3(0, 1, 0), Math.PI
+    );
   }
 
   /**
@@ -137,37 +157,33 @@ export class FlightPhysics {
       this._pitchInput -= fc.stallPitchRate;
     }
 
-    // 应用旋转 — 使用四元数防止万向锁
-    const pitchQ = new THREE.Quaternion();
-    const yawQ = new THREE.Quaternion();
-    const rollQ = new THREE.Quaternion();
-    const localRight = player.getRight();
-    const localUp = player.getUp();
-    const localForward = player.getForward();
+    // 应用旋转 — 使用四元数防止万向锁（复用预分配的四元数）
+    this._localRight.set(1, 0, 0).applyQuaternion(player.mesh.quaternion);
+    this._localUp.set(0, 1, 0).applyQuaternion(player.mesh.quaternion);
+    this._localForward.set(0, 0, 1).applyQuaternion(player.mesh.quaternion);
 
-    pitchQ.setFromAxisAngle(localRight, this._pitchInput * fc.pitchSpeed * dt);
-    yawQ.setFromAxisAngle(localUp, this._yawInput * fc.yawSpeed * dt);
-    rollQ.setFromAxisAngle(localForward, this._rollInput * fc.rollSpeed * dt);
+    this._pitchQ.setFromAxisAngle(this._localRight, this._pitchInput * fc.pitchSpeed * dt);
+    this._yawQ.setFromAxisAngle(this._localUp, this._yawInput * fc.yawSpeed * dt);
+    this._rollQ.setFromAxisAngle(this._localForward, this._rollInput * fc.rollSpeed * dt);
 
-    player.mesh.quaternion.premultiply(pitchQ);
-    player.mesh.quaternion.premultiply(yawQ);
-    player.mesh.quaternion.premultiply(rollQ);
+    player.mesh.quaternion.premultiply(this._pitchQ);
+    player.mesh.quaternion.premultiply(this._yawQ);
+    player.mesh.quaternion.premultiply(this._rollQ);
     player.mesh.quaternion.normalize();
 
     // === 5. 自动倾斜（视觉效果） ===
     const targetRoll = -this._yawInput * fc.maxRollAngle;
     this._rollAmount = lerp(this._rollAmount, targetRoll, fc.rollSpeed * dt);
 
-    // === 6. 位移 ===
-    const moveForward = player.getForward();
-    moveForward.multiplyScalar(player.speed * dt);
-    player.mesh.position.add(moveForward);
+    // === 6. 位移（复用向量） ===
+    this._moveForward.set(0, 0, 1).applyQuaternion(player.mesh.quaternion);
+    this._moveForward.multiplyScalar(player.speed * dt);
+    player.mesh.position.add(this._moveForward);
 
-    // 地面/山体碰撞坠毁
+    // 地面/山体碰撞坠毁（使用快速近似高度）
     let groundHeight = 5;
     if (this.terrain) {
-      // 射线检测地形高度，加上少许偏移防止穿模过深
-      groundHeight = Math.max(5, this.terrain.getSurfaceHeight(player.mesh.position.x, player.mesh.position.z));
+      groundHeight = Math.max(5, this.terrain.getApproxHeight(player.mesh.position.x, player.mesh.position.z));
     }
 
     if (player.mesh.position.y < groundHeight + 2 && !player.isDestroyed) {
@@ -190,10 +206,10 @@ export class FlightPhysics {
   _autoStabilize(dt) {
     const player = this.player;
     const stab = CONFIG.flight.stabilizationSpeed;
-    const euler = new THREE.Euler().setFromQuaternion(player.mesh.quaternion, 'YXZ');
-    euler.x = lerp(euler.x, 0, stab * dt);
-    euler.z = lerp(euler.z, 0, stab * dt);
-    player.mesh.quaternion.setFromEuler(euler);
+    this._tmpEuler.setFromQuaternion(player.mesh.quaternion, 'YXZ');
+    this._tmpEuler.x = lerp(this._tmpEuler.x, 0, stab * dt);
+    this._tmpEuler.z = lerp(this._tmpEuler.z, 0, stab * dt);
+    player.mesh.quaternion.setFromEuler(this._tmpEuler);
   }
 
   /**
@@ -236,10 +252,9 @@ export class FlightPhysics {
       }
     }
 
-    // 计算到目标的方向和距离
-    const toTarget = new THREE.Vector3();
-    toTarget.subVectors(this.autoNavTarget.mesh.position, player.mesh.position);
-    const distance = toTarget.length();
+    // 计算到目标的方向和距离（复用向量）
+    this._tmpToTarget.subVectors(this.autoNavTarget.mesh.position, player.mesh.position);
+    const distance = this._tmpToTarget.length();
 
     // 到达近距离 → 自动关闭导航
     if (distance <= this._autoNavCloseDistance) {
@@ -248,25 +263,20 @@ export class FlightPhysics {
       return;
     }
 
-    // 用球面插值平滑转向目标
-    const targetDir = toTarget.normalize();
-    const targetQuat = new THREE.Quaternion();
-    const lookMat = new THREE.Matrix4();
-    const eye = player.mesh.position.clone();
-    const center = player.mesh.position.clone().add(targetDir);
-    const up = new THREE.Vector3(0, 1, 0);
-    lookMat.lookAt(eye, center, up);
-    targetQuat.setFromRotationMatrix(lookMat);
+    // 用球面插值平滑转向目标（复用预分配的对象）
+    this._tmpTargetDir.copy(this._tmpToTarget).normalize();
+    this._tmpEye.copy(player.mesh.position);
+    this._tmpCenter.copy(player.mesh.position).add(this._tmpTargetDir);
+    this._tmpUpVec.set(0, 1, 0);
+    this._tmpLookMat.lookAt(this._tmpEye, this._tmpCenter, this._tmpUpVec);
+    this._tmpTargetQuat.setFromRotationMatrix(this._tmpLookMat);
 
-    // 旋转 180°修正（lookAt 和模型朝向可能相反）
-    const flipQuat = new THREE.Quaternion().setFromAxisAngle(
-      new THREE.Vector3(0, 1, 0), Math.PI
-    );
-    targetQuat.multiply(flipQuat);
+    // 旋转 180°修正
+    this._tmpTargetQuat.multiply(this._tmpFlipQuat);
 
-    // 平滑插值，turnSpeed * dt 控制转向速率
+    // 平滑插值
     const t = clamp(this._autoNavTurnSpeed * dt, 0, 1);
-    player.mesh.quaternion.slerp(targetQuat, t);
+    player.mesh.quaternion.slerp(this._tmpTargetQuat, t);
     player.mesh.quaternion.normalize();
   }
 

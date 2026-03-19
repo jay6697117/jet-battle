@@ -55,7 +55,7 @@ export const CONFIG = {
       speed: 200, // 导弹速度（比敌机快得多）
       turnRate: 5.0, // 导弹转向速率（高追踪能力）
       damage: 60, // 命中伤害（一发击杀）
-      lockTime: 3.0, // 锁定所需时间（3 秒倒计时）
+      lockTime: 2.0, // 锁定所需时间（2 秒倒计时）
       lockAngle: Math.PI / 2, // 锁定锥角 (90°，更宽广)
       lockRange: 2500, // 锁定最大距离
       maxLifetime: 12.0, // 导弹最大存活时间（更持久追踪）

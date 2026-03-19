@@ -32,6 +32,31 @@ export class HUDSystem {
       lockStatus: document.getElementById('hud-lock-status'),
       buffs: document.getElementById('hud-buffs'),
     };
+
+    // 脏标记缓存：只在值变化时更新 DOM
+    this._cache = {
+      speed: -1,
+      altitude: -1,
+      throttle: -1,
+      wave: -1,
+      missiles: -1,
+      flares: -1,
+      enemies: -1,
+      healthPct: -1,
+      healthLow: false,
+      healthVal: -1,
+      heat: -1,
+      overheated: false,
+      heatVal: -1,
+      boost: -1,
+      boostVal: -1,
+      levelKills: '',
+      lockText: '',
+      lockClass: '',
+      autoNavVisible: false,
+      autoNavDist: -1,
+      buffCount: -1,
+    };
   }
 
   /**
@@ -40,119 +65,184 @@ export class HUDSystem {
   update(dt, waveSystem, powerUpSystem) {
     const p = this.player;
     const els = this.els;
+    const c = this._cache;
 
     // 速度（百分比显示）
     if (els.speed) {
       const maxSpeed = CONFIG.flight.maxSpeed;
       const percent = Math.round((p.speed / maxSpeed) * 100);
-      els.speed.textContent = percent;
+      if (c.speed !== percent) {
+        c.speed = percent;
+        els.speed.textContent = percent;
+      }
     }
 
     // 海拔
     if (els.altitude) {
-      els.altitude.textContent = Math.round(p.mesh.position.y);
+      const alt = Math.round(p.mesh.position.y);
+      if (c.altitude !== alt) {
+        c.altitude = alt;
+        els.altitude.textContent = alt;
+      }
     }
 
     // 油门百分比
     if (els.throttle) {
-      const percent = CONFIG.flight.throttleLevels[p.throttleIndex] * 100;
-      els.throttle.textContent = Math.round(percent) + '%';
+      const tIdx = p.throttleIndex;
+      if (c.throttle !== tIdx) {
+        c.throttle = tIdx;
+        const percent = CONFIG.flight.throttleLevels[tIdx] * 100;
+        els.throttle.textContent = Math.round(percent) + '%';
+      }
     }
 
     // 波次（关卡号）
     if (els.wave && waveSystem) {
-      els.wave.textContent = waveSystem.currentWave;
+      const w = waveSystem.currentWave;
+      if (c.wave !== w) {
+        c.wave = w;
+        els.wave.textContent = w;
+      }
     }
 
     // 导弹数
     if (els.missiles) {
-      els.missiles.textContent = p.missiles;
+      if (c.missiles !== p.missiles) {
+        c.missiles = p.missiles;
+        els.missiles.textContent = p.missiles;
+      }
     }
 
     // 干扰弹数
     if (els.flares) {
-      els.flares.textContent = p.flares;
+      if (c.flares !== p.flares) {
+        c.flares = p.flares;
+        els.flares.textContent = p.flares;
+      }
     }
 
     // 敌机存活数
     if (els.enemies && waveSystem) {
       const info = waveSystem.getInfo();
-      els.enemies.textContent = info.enemiesAlive;
+      if (c.enemies !== info.enemiesAlive) {
+        c.enemies = info.enemiesAlive;
+        els.enemies.textContent = info.enemiesAlive;
+      }
     }
 
     // 关卡击杀进度
     if (els.levelKills && waveSystem) {
       const info = waveSystem.getInfo();
-      els.levelKills.textContent = `${info.levelKills}/${info.requiredKills}`;
+      const text = `${info.levelKills}/${info.requiredKills}`;
+      if (c.levelKills !== text) {
+        c.levelKills = text;
+        els.levelKills.textContent = text;
+      }
     }
 
     // 血量条
     if (els.healthBar) {
-      const hp = (p.health / CONFIG.player.maxHealth) * 100;
-      els.healthBar.style.width = hp + '%';
-      if (hp < 30) {
-        els.healthBar.style.background = 'linear-gradient(90deg, #ff4444, #ff0000)';
-      } else {
-        els.healthBar.style.background = 'linear-gradient(90deg, #00ff88, #00cc66)';
+      const hp = Math.round((p.health / CONFIG.player.maxHealth) * 100);
+      if (c.healthPct !== hp) {
+        c.healthPct = hp;
+        els.healthBar.style.width = hp + '%';
+        const isLow = hp < 30;
+        if (c.healthLow !== isLow) {
+          c.healthLow = isLow;
+          els.healthBar.style.background = isLow
+            ? 'linear-gradient(90deg, #ff4444, #ff0000)'
+            : 'linear-gradient(90deg, #00ff88, #00cc66)';
+        }
       }
     }
     if (els.healthValue) {
-      els.healthValue.textContent = Math.round(p.health) + '%';
+      const hv = Math.round(p.health);
+      if (c.healthVal !== hv) {
+        c.healthVal = hv;
+        els.healthValue.textContent = hv + '%';
+      }
     }
 
     // 热度条
     if (els.heatBar) {
-      els.heatBar.style.width = p.heat + '%';
-      if (p.isOverheated) {
-        els.heatBar.classList.add('overheated');
-      } else {
-        els.heatBar.classList.remove('overheated');
+      const heat = Math.round(p.heat);
+      if (c.heat !== heat) {
+        c.heat = heat;
+        els.heatBar.style.width = p.heat + '%';
+      }
+      if (c.overheated !== p.isOverheated) {
+        c.overheated = p.isOverheated;
+        if (p.isOverheated) {
+          els.heatBar.classList.add('overheated');
+        } else {
+          els.heatBar.classList.remove('overheated');
+        }
       }
     }
     if (els.heatValue) {
-      els.heatValue.textContent = Math.round(p.heat) + '%';
+      const hv = Math.round(p.heat);
+      if (c.heatVal !== hv) {
+        c.heatVal = hv;
+        els.heatValue.textContent = hv + '%';
+      }
     }
 
     // Boost 条
     if (els.boostBar) {
-      els.boostBar.style.width = p.boostEnergy + '%';
+      const b = Math.round(p.boostEnergy);
+      if (c.boost !== b) {
+        c.boost = b;
+        els.boostBar.style.width = p.boostEnergy + '%';
+      }
     }
     if (els.boostValue) {
-      els.boostValue.textContent = Math.round(p.boostEnergy) + '%';
+      const bv = Math.round(p.boostEnergy);
+      if (c.boostVal !== bv) {
+        c.boostVal = bv;
+        els.boostValue.textContent = bv + '%';
+      }
     }
 
     // 锁定状态
     if (els.lockStatus && this.weaponSystem) {
       const ws = this.weaponSystem;
+      let text, cls;
       if (ws.isLocked && ws.lockTarget) {
-        // 已锁定
-        els.lockStatus.textContent = '已锁定 ✓';
-        els.lockStatus.className = 'hud-lock-status locked';
+        text = '已锁定 ✓';
+        cls = 'hud-lock-status locked';
       } else if (ws.lockTarget && ws.lockProgress > 0) {
-        // 锁定中（显示剩余倒计时）
         const remaining = ((1 - ws.lockProgress) * CONFIG.weapons.missile.lockTime).toFixed(1);
-        els.lockStatus.textContent = `锁定中 ${remaining}s`;
-        els.lockStatus.className = 'hud-lock-status locking';
+        text = `锁定中 ${remaining}s`;
+        cls = 'hud-lock-status locking';
       } else {
-        // 无目标
-        els.lockStatus.textContent = '无目标';
-        els.lockStatus.className = 'hud-lock-status no-target';
+        text = '无目标';
+        cls = 'hud-lock-status no-target';
+      }
+      if (c.lockText !== text) {
+        c.lockText = text;
+        els.lockStatus.textContent = text;
+      }
+      if (c.lockClass !== cls) {
+        c.lockClass = cls;
+        els.lockStatus.className = cls;
       }
     }
 
     // 自动导航状态
     if (els.autoNav && this.flightPhysics) {
-      if (this.flightPhysics.autoNavEnabled) {
-        els.autoNav.style.display = 'flex';
-        // 显示距离
-        if (els.autoNavDist && this.flightPhysics.autoNavTarget) {
-          const dist = p.mesh.position.distanceTo(
-            this.flightPhysics.autoNavTarget.mesh.position
-          );
-          els.autoNavDist.textContent = Math.round(dist) + 'm';
+      const visible = this.flightPhysics.autoNavEnabled;
+      if (c.autoNavVisible !== visible) {
+        c.autoNavVisible = visible;
+        els.autoNav.style.display = visible ? 'flex' : 'none';
+      }
+      if (visible && els.autoNavDist && this.flightPhysics.autoNavTarget) {
+        const dist = Math.round(p.mesh.position.distanceTo(
+          this.flightPhysics.autoNavTarget.mesh.position
+        ));
+        if (c.autoNavDist !== dist) {
+          c.autoNavDist = dist;
+          els.autoNavDist.textContent = dist + 'm';
         }
-      } else {
-        els.autoNav.style.display = 'none';
       }
     }
 
@@ -161,38 +251,58 @@ export class HUDSystem {
   }
 
   /**
-   * 更新 Buff 道具的 HUD 显示
+   * 更新 Buff 道具的 HUD 显示（增量更新，避免每帧重建 DOM）
    */
   _updateBuffs(powerUpSystem) {
     if (!this.els.buffs || !powerUpSystem) return;
     const buffs = powerUpSystem.getActiveBuffs();
+    const container = this.els.buffs;
 
-    // 清空旧内容
-    this.els.buffs.innerHTML = '';
+    // 只在 buff 数量变化时重建 DOM
+    if (this._cache.buffCount !== buffs.length) {
+      this._cache.buffCount = buffs.length;
+      container.innerHTML = '';
 
-    for (const buff of buffs) {
-      const item = document.createElement('div');
-      item.className = 'buff-item';
-      if (buff.remaining <= 3) item.classList.add('expiring');
+      for (const buff of buffs) {
+        const item = document.createElement('div');
+        item.className = 'buff-item';
+        item.dataset.buffId = buff.id;
+        item.innerHTML = `
+          <span>${buff.icon}</span>
+          <div class="buff-timer">
+            <svg viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" stroke="${buff.color}" />
+            </svg>
+          </div>
+        `;
+        container.appendChild(item);
+      }
+    }
 
-      // 圆形倒计时进度
-      const progress = buff.remaining / buff.duration;
-      const circumference = 2 * Math.PI * 20;
-      const offset = circumference * (1 - progress);
+    // 更新各 buff 的进度和状态（只修改属性，不重建）
+    const items = container.children;
+    for (let i = 0; i < buffs.length && i < items.length; i++) {
+      const buff = buffs[i];
+      const item = items[i];
 
-      item.innerHTML = `
-        <span>${buff.icon}</span>
-        <div class="buff-timer">
-          <svg viewBox="0 0 48 48">
-            <circle cx="24" cy="24" r="20"
-              stroke="${buff.color}"
-              stroke-dasharray="${circumference}"
-              stroke-dashoffset="${offset}" />
-          </svg>
-        </div>
-      `;
+      // 过期闪烁样式
+      if (buff.remaining <= 3) {
+        item.classList.add('expiring');
+      } else {
+        item.classList.remove('expiring');
+      }
+
+      // 更新进度环
+      const circle = item.querySelector('circle');
+      if (circle) {
+        const progress = buff.remaining / buff.duration;
+        const circumference = 2 * Math.PI * 20;
+        const offset = circumference * (1 - progress);
+        circle.setAttribute('stroke-dasharray', String(circumference));
+        circle.setAttribute('stroke-dashoffset', String(offset));
+      }
+
       item.title = `${buff.name} — ${Math.ceil(buff.remaining)}s`;
-      this.els.buffs.appendChild(item);
     }
   }
 }
