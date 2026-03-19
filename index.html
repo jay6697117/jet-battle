@@ -15,11 +15,11 @@
     <div id="main-menu">
       <div class="menu-content">
         <h1 class="menu-title">JET BATTLE</h1>
-        <p class="menu-subtitle">MODERN AIR COMBAT</p>
+        <p class="menu-subtitle">现代空战</p>
         <div class="menu-buttons">
           <button id="btn-solo" class="menu-btn menu-btn-primary">
             <span class="btn-icon">✈</span>
-            <span class="btn-text">SOLO MISSION</span>
+            <span class="btn-text">单人任务</span>
             <span class="btn-desc">对战 AI 敌机</span>
           </button>
         </div>
@@ -62,21 +62,21 @@
       <!-- 左上：飞行信息 -->
       <div id="hud-top-left">
         <div class="hud-info-item">
-          <span class="hud-label">SPD</span>
+          <span class="hud-label">速度</span>
           <span class="hud-value" id="hud-speed">0</span>
           <span class="hud-unit">%</span>
         </div>
         <div class="hud-info-item">
-          <span class="hud-label">ALT</span>
+          <span class="hud-label">高度</span>
           <span class="hud-value" id="hud-altitude">0</span>
           <span class="hud-unit">m</span>
         </div>
         <div class="hud-info-item">
-          <span class="hud-label">THR</span>
+          <span class="hud-label">油门</span>
           <span class="hud-value" id="hud-throttle">50%</span>
         </div>
         <div class="hud-info-item">
-          <span class="hud-label">WAVE</span>
+          <span class="hud-label">关卡</span>
           <span class="hud-value" id="hud-wave">1</span>
         </div>
       </div>
@@ -104,21 +104,21 @@
       <!-- 左下：状态条 -->
       <div id="hud-bottom-left">
         <div class="hud-bar-container">
-          <span class="hud-bar-label">HEALTH</span>
+          <span class="hud-bar-label">生命值</span>
           <div class="hud-bar">
             <div class="hud-bar-fill health-bar" id="hud-health-bar" style="width:100%"></div>
           </div>
           <span class="hud-bar-value" id="hud-health-value">100%</span>
         </div>
         <div class="hud-bar-container">
-          <span class="hud-bar-label">HEAT</span>
+          <span class="hud-bar-label">热量</span>
           <div class="hud-bar">
             <div class="hud-bar-fill heat-bar" id="hud-heat-bar" style="width:0%"></div>
           </div>
           <span class="hud-bar-value" id="hud-heat-value">0%</span>
         </div>
         <div class="hud-bar-container">
-          <span class="hud-bar-label">BOOST</span>
+          <span class="hud-bar-label">加速槽</span>
           <div class="hud-bar">
             <div class="hud-bar-fill boost-bar" id="hud-boost-bar" style="width:100%"></div>
           </div>
@@ -128,9 +128,9 @@
 
       <!-- 底部中央：击杀统计 -->
       <div id="hud-bottom-center">
-        <span class="hud-stat">KILLS: <strong id="hud-kills">0</strong></span>
-        <span class="hud-stat">DEATHS: <strong id="hud-deaths">0</strong></span>
-        <span class="hud-stat">K/D: <strong id="hud-kd">0.0</strong></span>
+        <span class="hud-stat">击杀: <strong id="hud-kills">0</strong></span>
+        <span class="hud-stat">阵亡: <strong id="hud-deaths">0</strong></span>
+        <span class="hud-stat">战损比: <strong id="hud-kd">0.0</strong></span>
       </div>
 
       <!-- 中心准星 -->
@@ -160,16 +160,16 @@
     <!-- 排行榜 -->
     <div id="leaderboard-overlay" style="display:none;">
       <div class="leaderboard-panel">
-        <h2 class="leaderboard-title">LEADERBOARD</h2>
+        <h2 class="leaderboard-title">排行榜</h2>
         <table class="leaderboard-table">
           <thead>
             <tr>
-              <th>RANK</th>
-              <th>PILOT</th>
-              <th>KILLS</th>
-              <th>DEATHS</th>
-              <th>K/D</th>
-              <th>TIME</th>
+              <th>排名</th>
+              <th>飞行员</th>
+              <th>击杀</th>
+              <th>阵亡</th>
+              <th>战损比</th>
+              <th>存活时间</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body">
@@ -181,21 +181,21 @@
     <!-- 设置菜单 -->
     <div id="settings-menu" style="display:none;">
       <div class="settings-panel">
-        <h2 class="settings-title">SETTINGS</h2>
+        <h2 class="settings-title">设置</h2>
         <div class="settings-group">
-          <label class="settings-label">画质 Quality</label>
+          <label class="settings-label">画质</label>
           <div class="settings-buttons">
-            <button id="settings-quality-low" class="settings-btn">LOW</button>
-            <button id="settings-quality-medium" class="settings-btn">MEDIUM</button>
-            <button id="settings-quality-high" class="settings-btn active">HIGH</button>
+            <button id="settings-quality-low" class="settings-btn">低</button>
+            <button id="settings-quality-medium" class="settings-btn">中</button>
+            <button id="settings-quality-high" class="settings-btn active">高</button>
           </div>
         </div>
         <div class="settings-group">
-          <label class="settings-label">Y 轴反转 Invert Y</label>
+          <label class="settings-label">Y 轴反转</label>
           <button id="settings-invert-y" class="settings-btn toggle-btn">关闭</button>
         </div>
         <div class="settings-group">
-          <label class="settings-label">音效 Sound</label>
+          <label class="settings-label">音效</label>
           <button id="settings-sound" class="settings-btn toggle-btn active">开启</button>
         </div>
         <button id="settings-close" class="settings-btn close-btn">关闭设置 (ESC)</button>
@@ -204,7 +204,7 @@
 
     <!-- 调试面板 -->
     <div id="debug-panel" style="display:none;">
-      <div class="debug-header">DEBUG PERFORMANCE <span class="debug-hint">F3 to toggle</span></div>
+      <div class="debug-header">性能调试面板 <span class="debug-hint">F3 切换显示</span></div>
       <div id="debug-content"></div>
     </div>
 
@@ -212,7 +212,7 @@
     <div id="notifications-container"></div>
 
     <!-- 音频控制 -->
-    <button id="audio-enabler" style="display:none;">Click to Enable Audio</button>
+    <button id="audio-enabler" style="display:none;">点击启用音频</button>
     <button id="sound-toggle" style="display:none;">🔊 (M)</button>
 
     <!-- 移动端控制 -->
@@ -224,9 +224,9 @@
     <div id="mobile-throttle" style="display:none;">
       <div class="throttle-track"></div>
       <div class="throttle-handle"></div>
-      <div class="throttle-label">THR</div>
+      <div class="throttle-label">油门</div>
     </div>
-    <div id="mobile-fire" style="display:none;">FIRE</div>
+    <div id="mobile-fire" style="display:none;">开火</div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

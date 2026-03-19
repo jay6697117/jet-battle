@@ -26,7 +26,7 @@ export class ScreenEffects {
     this._deathOverlay.className = 'screen-effect death-overlay';
     this._deathOverlay.innerHTML = `
       <div class="death-content">
-        <div class="death-title">DESTROYED</div>
+        <div class="death-title">战机被毁</div>
         <div class="death-subtitle">按 R 键重试本关</div>
       </div>
     `;
@@ -72,7 +72,7 @@ export class ScreenEffects {
 
     // 击杀弹出
     if (killCount !== undefined) {
-      this._killPopup.textContent = `KILL #${killCount}`;
+      this._killPopup.textContent = `击杀 #${killCount}`;
       this._killPopup.classList.add('active');
       setTimeout(() => this._killPopup.classList.remove('active'), 1500);
     }
@@ -99,7 +99,7 @@ export class ScreenEffects {
    */
   showWave(waveNum) {
     const textEl = this._waveOverlay.querySelector('.wave-text');
-    textEl.textContent = `WAVE ${waveNum}`;
+    textEl.textContent = `第 ${waveNum} 关`;
     this._waveOverlay.classList.add('active');
     setTimeout(() => this._waveOverlay.classList.remove('active'), 2500);
   }

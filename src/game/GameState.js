@@ -38,7 +38,7 @@ export class GameState {
   respawn() {
     this.isAlive = true;
     this.respawnTimer = 0;
-    this._showNotification('RESPAWNED');
+    this._showNotification('已重生');
   }
 
   /**
@@ -81,7 +81,7 @@ export class GameState {
 
     // 当前游戏数据
     const currentEntry = {
-      pilot: 'YOU',
+      pilot: '你',
       kills: this.kills,
       deaths: this.deaths,
       kd: this.getKD(),
@@ -127,7 +127,7 @@ export class GameState {
     if (this.kills === 0 && this.deaths === 0) return;
 
     const entry = {
-      pilot: `Pilot-${Date.now().toString(36).slice(-4).toUpperCase()}`,
+      pilot: `飞行员-${Date.now().toString(36).slice(-4).toUpperCase()}`,
       kills: this.kills,
       deaths: this.deaths,
       kd: this.getKD(),

@@ -64,13 +64,13 @@ export class PlayerJet {
             child.material.emissive.set(0x000000);
             child.material.emissiveIntensity = 0;
           } else {
-            // 机壳：24K 纯正土豪金
-            child.material.color.set(0xffd700);
-            child.material.metalness = 1.0;
-            child.material.roughness = 0.25;
-            // 微弱的暖金流光
-            child.material.emissive.set(0x332200);
-            child.material.emissiveIntensity = 0.3;
+            // 机壳：24K 纯正土豪金（降低物理金属度以适应当前的光照环境，防止变黑）
+            child.material.color.set(0xffc500); // 更鲜亮的黄金色
+            child.material.metalness = 0.3;     // 放弃纯反射金属，回归漫反射为主，这样颜色才出得来
+            child.material.roughness = 0.4;     // 增加一点粗糙度，让高光稍微散开
+            // 微微的自体发光，确保背光面依然金灿灿
+            child.material.emissive.set(0x553300);
+            child.material.emissiveIntensity = 0.6;
           }
         }
       });
@@ -99,11 +99,11 @@ export class PlayerJet {
     const bodyGeo = new THREE.CylinderGeometry(0, 0.8, 8, 6);
     bodyGeo.rotateX(Math.PI / 2);
     const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xffd700,          // 24K土豪金
-      metalness: 1.0,           // 纯金属
-      roughness: 0.25,          // 高抛光质感
-      emissive: 0x332200,       // 暖金光效
-      emissiveIntensity: 0.3,
+      color: 0xffc500,          // 更鲜亮的土豪金
+      metalness: 0.3,           // 降低金属度防止没贴图时死黑
+      roughness: 0.4,           // 适当的高光
+      emissive: 0x553300,       // 暖金背光补偿
+      emissiveIntensity: 0.6,
       flatShading: true,
     });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
