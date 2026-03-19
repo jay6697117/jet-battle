@@ -42,6 +42,7 @@ export class Game {
     this.renderer = new THREE.WebGLRenderer({
       antialias: quality.antialias,
       powerPreference: 'high-performance',
+      logarithmicDepthBuffer: true, // 对数深度缓冲，解决远距离 Z-fighting
     });
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);

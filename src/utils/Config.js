@@ -91,7 +91,7 @@ export const CONFIG = {
   // 相机
   camera: {
     fov: 60,
-    nearClip: 0.1,
+    nearClip: 1.0,
     farClip: 10000,
     followDistance: 25, // 跟随距离（拉远相机，让飞机不挡视野）
     followHeight: 8, // 跟随高度（稍微抬高，视野更开阔）
@@ -181,10 +181,10 @@ export const CONFIG = {
     },
     // 各道具的持续时间范围（秒）[min, max]
     durationByRarity: {
-      common: [5, 8],
-      rare: [8, 12],
-      epic: [12, 15],
-      legendary: [15, 20],
+      common: [20, 32],
+      rare: [32, 48],
+      epic: [48, 60],
+      legendary: [60, 80],
     },
   },
 };
