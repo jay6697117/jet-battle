@@ -49,6 +49,9 @@ let powerUpSystem = null;
 
 // 尾迹计时器
 let _trailTimer = 0;
+// 预分配尾迹复用向量，避免每次 clone
+const _trailBackward = null; // 延迟初始化（需要 THREE）
+let _trailPos = null;
 
 /**
  * 初始化游戏
@@ -225,7 +228,7 @@ function startGame() {
 
   // 玩家被击中 → 受击火花 + 音效 + 屏幕闪红
   collisionSystem.onPlayerHit = () => {
-    particleSystem.createHitSpark(player.mesh.position.clone());
+    particleSystem.createHitSpark(player.mesh.position);
     audioManager.playHit();
     screenEffects.flashDamage();
   };
@@ -297,9 +300,14 @@ function startGame() {
       _trailTimer += dt;
       if (_trailTimer > 0.05 && !player.isDestroyed) {
         _trailTimer = 0;
-        const backward = player.getForward().multiplyScalar(-1);
-        const trailPos = player.mesh.position.clone().add(backward.clone().multiplyScalar(7));
-        particleSystem.createTrail(trailPos, backward);
+        // 复用预分配向量，避免每次 clone
+        if (!_trailPos) {
+          _trailPos = new THREE.Vector3();
+        }
+        const fwd = player.getForward();
+        _trailPos.copy(player.mesh.position).addScaledVector(fwd, -7);
+        fwd.negate(); // 反转为 backward
+        particleSystem.createTrail(_trailPos, fwd);
       }
 
       // 9. 相机跟随

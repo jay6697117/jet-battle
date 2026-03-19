@@ -87,7 +87,9 @@ export class AISystem {
 
       if (enemy.isDestroyed) {
         this.scene.remove(enemy.mesh);
-        this.enemies.splice(i, 1);
+        // swap-pop: O(1) 删除
+        this.enemies[i] = this.enemies[this.enemies.length - 1];
+        this.enemies.pop();
         listChanged = true;
         continue;
       }
@@ -348,7 +350,8 @@ export class AISystem {
       b.update(dt);
       if (b.isDestroyed) {
         this.scene.remove(b.mesh);
-        this._enemyBullets.splice(i, 1);
+        this._enemyBullets[i] = this._enemyBullets[this._enemyBullets.length - 1];
+        this._enemyBullets.pop();
         changed = true;
       }
     }

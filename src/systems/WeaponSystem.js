@@ -284,7 +284,9 @@ export class WeaponSystem {
       b.update(dt);
       if (b.isDestroyed) {
         this.scene.remove(b.mesh);
-        this.bullets.splice(i, 1);
+        // swap-pop: O(1) 删除替代 splice
+        this.bullets[i] = this.bullets[this.bullets.length - 1];
+        this.bullets.pop();
         bulletChanged = true;
       }
     }
@@ -297,7 +299,8 @@ export class WeaponSystem {
       m.update(dt);
       if (m.isDestroyed) {
         this.scene.remove(m.mesh);
-        this.missiles.splice(i, 1);
+        this.missiles[i] = this.missiles[this.missiles.length - 1];
+        this.missiles.pop();
         missileChanged = true;
       }
     }
@@ -309,7 +312,8 @@ export class WeaponSystem {
       f.update(dt);
       if (f.isDestroyed) {
         this.scene.remove(f.mesh);
-        this.flares.splice(i, 1);
+        this.flares[i] = this.flares[this.flares.length - 1];
+        this.flares.pop();
       }
     }
   }

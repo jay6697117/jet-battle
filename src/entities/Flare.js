@@ -28,6 +28,9 @@ export class Flare {
       -5,
       -20
     );
+
+    // 预分配移动向量，避免每帧 clone
+    this._tmpMove = new THREE.Vector3();
   }
 
   /**
@@ -46,7 +49,9 @@ export class Flare {
     this._velocity.y -= 5 * dt;
     this._velocity.multiplyScalar(0.98);
 
-    this.mesh.position.add(this._velocity.clone().multiplyScalar(dt));
+    // 复用临时向量，避免每帧 clone
+    this._tmpMove.copy(this._velocity).multiplyScalar(dt);
+    this.mesh.position.add(this._tmpMove);
 
     // 闪烁效果
     const flicker = 0.4 + Math.random() * 0.6;

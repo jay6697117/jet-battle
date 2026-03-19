@@ -148,10 +148,10 @@ export class World {
     sunLight.shadow.mapSize.height = 2048;
     sunLight.shadow.camera.near = 10;
     sunLight.shadow.camera.far = 2000;
-    sunLight.shadow.camera.left = -500;
-    sunLight.shadow.camera.right = 500;
-    sunLight.shadow.camera.top = 500;
-    sunLight.shadow.camera.bottom = -500;
+    sunLight.shadow.camera.left = -200;
+    sunLight.shadow.camera.right = 200;
+    sunLight.shadow.camera.top = 200;
+    sunLight.shadow.camera.bottom = -200;
     this.scene.add(sunLight);
     this.sunLight = sunLight;
 

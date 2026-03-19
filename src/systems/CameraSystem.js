@@ -30,6 +30,11 @@ export class CameraSystem {
     this._rotAxis = new THREE.Vector3(0, 1, 0);
     this._tmpUp = new THREE.Vector3();
     this._tmpForward = new THREE.Vector3();
+
+    // 缓存太阳光引用（用于阴影跟随玩家）
+    this._sunLight = game.world ? game.world.sunLight : null;
+    // 太阳光相对偏移
+    this._sunOffset = new THREE.Vector3(200, 400, 300);
   }
 
   /**
@@ -84,6 +89,13 @@ export class CameraSystem {
       this.game.targetFov = cfg.boostFov;
     } else {
       this.game.targetFov = cfg.fov;
+    }
+
+    // 阴影跟随玩家：让太阳光始终覆盖玩家附近区域
+    if (this._sunLight) {
+      this._sunLight.position.copy(player.mesh.position).add(this._sunOffset);
+      this._sunLight.target.position.copy(player.mesh.position);
+      this._sunLight.target.updateMatrixWorld();
     }
   }
 }

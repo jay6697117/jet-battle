@@ -6,6 +6,60 @@ import { CONFIG } from '../utils/Config.js';
  * 使用比例导航法（Proportional Navigation）追踪目标
  * 具备预判拦截能力，像真正的现代导弹一样追踪敌机
  */
+
+// 共享几何体和材质（全局唯一，避免每颗导弹独立创建）
+let _bodyGeo = null;
+let _bodyMat = null;
+let _noseGeo = null;
+let _noseMat = null;
+let _flameGeo = null;
+let _flameMat = null;
+
+function _getBodyGeo() {
+  if (!_bodyGeo) {
+    _bodyGeo = new THREE.CylinderGeometry(0.1, 0.15, 2, 6);
+    _bodyGeo.rotateX(Math.PI / 2);
+  }
+  return _bodyGeo;
+}
+function _getBodyMat() {
+  if (!_bodyMat) {
+    _bodyMat = new THREE.MeshStandardMaterial({
+      color: 0xcccccc, roughness: 0.3, metalness: 0.7,
+    });
+  }
+  return _bodyMat;
+}
+function _getNoseGeo() {
+  if (!_noseGeo) {
+    _noseGeo = new THREE.ConeGeometry(0.15, 0.5, 6);
+    _noseGeo.rotateX(-Math.PI / 2);
+  }
+  return _noseGeo;
+}
+function _getNoseMat() {
+  if (!_noseMat) {
+    _noseMat = new THREE.MeshStandardMaterial({
+      color: 0xff3333, roughness: 0.5, metalness: 0.3,
+    });
+  }
+  return _noseMat;
+}
+function _getFlameGeo() {
+  if (!_flameGeo) {
+    _flameGeo = new THREE.SphereGeometry(0.2, 6, 4);
+  }
+  return _flameGeo;
+}
+function _getFlameMat() {
+  if (!_flameMat) {
+    _flameMat = new THREE.MeshBasicMaterial({
+      color: 0xff8800, transparent: true, opacity: 0.8,
+    });
+  }
+  return _flameMat;
+}
+
 export class Missile {
   constructor(position, direction, target = null, owner = 'player') {
     this.isDestroyed = false;
@@ -30,42 +84,19 @@ export class Missile {
     this._tmpPredictedPos = new THREE.Vector3();
     this._tmpToFlare = new THREE.Vector3();
 
-    // 导弹网格
+    // 导弹网格（使用共享 Geometry/Material）
     const group = new THREE.Group();
 
-    // 弹体
-    const bodyGeo = new THREE.CylinderGeometry(0.1, 0.15, 2, 6);
-    bodyGeo.rotateX(Math.PI / 2);
-    const bodyMat = new THREE.MeshStandardMaterial({
-      color: 0xcccccc,
-      roughness: 0.3,
-      metalness: 0.7,
-    });
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
+    const body = new THREE.Mesh(_getBodyGeo(), _getBodyMat());
     group.add(body);
 
-    // 弹头（红色锥形）
-    const noseGeo = new THREE.ConeGeometry(0.15, 0.5, 6);
-    noseGeo.rotateX(-Math.PI / 2);
-    const noseMat = new THREE.MeshStandardMaterial({
-      color: 0xff3333,
-      roughness: 0.5,
-      metalness: 0.3,
-    });
-    const nose = new THREE.Mesh(noseGeo, noseMat);
+    const nose = new THREE.Mesh(_getNoseGeo(), _getNoseMat());
     nose.position.z = 1.2;
     group.add(nose);
 
-    // 尾焰（发光球）
-    const flameMat = new THREE.MeshBasicMaterial({
-      color: 0xff8800,
-      transparent: true,
-      opacity: 0.8,
-    });
-    const flame = new THREE.Mesh(
-      new THREE.SphereGeometry(0.2, 6, 4),
-      flameMat
-    );
+    // 尾焰需要独立材质实例（因为每颗导弹独立修改 opacity）
+    this._flameMat = _getFlameMat().clone();
+    const flame = new THREE.Mesh(_getFlameGeo(), this._flameMat);
     flame.position.z = -1.2;
     group.add(flame);
     this._flame = flame;
@@ -100,7 +131,7 @@ export class Missile {
 
     // 尾焰闪烁
     if (this._flame) {
-      this._flame.material.opacity = 0.5 + Math.random() * 0.5;
+      this._flameMat.opacity = 0.5 + Math.random() * 0.5;
       this._flame.scale.setScalar(0.8 + Math.random() * 0.4);
     }
 
@@ -172,13 +203,9 @@ export class Missile {
    */
   destroy() {
     this.isDestroyed = true;
-    if (this.mesh) {
-      this.mesh.traverse((child) => {
-        if (child.isMesh) {
-          child.geometry.dispose();
-          child.material.dispose();
-        }
-      });
+    // 只 dispose 独立的尾焰材质，共享的 geometry/material 不销毁
+    if (this._flameMat) {
+      this._flameMat.dispose();
     }
   }
 }

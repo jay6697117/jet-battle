@@ -118,9 +118,12 @@ export class PowerUpSystem {
       this._spawnTimer = 0;
       this._nextSpawnInterval = this._randomInterval();
 
-      // 检查地图上的盲盒数量上限
-      const aliveBoxes = this._boxes.filter(b => !b.isCollected);
-      if (aliveBoxes.length < CONFIG.powerUp.mapSpawn.maxOnMap) {
+      // 检查地图上的盲盒数量上限（用 for 计数替代 filter）
+      let aliveCount = 0;
+      for (let j = 0; j < this._boxes.length; j++) {
+        if (!this._boxes[j].isCollected) aliveCount++;
+      }
+      if (aliveCount < CONFIG.powerUp.mapSpawn.maxOnMap) {
         const pos = this._randomSpawnPosition();
         this._spawnBox(pos);
       }
@@ -149,7 +152,8 @@ export class PowerUpSystem {
       if (box.isReadyToRemove() || (box.isCollected && box._collectAnim >= 1)) {
         this.scene.remove(box.mesh);
         box.dispose();
-        this._boxes.splice(i, 1);
+        this._boxes[i] = this._boxes[this._boxes.length - 1];
+        this._boxes.pop();
       }
     }
   }
@@ -267,9 +271,9 @@ export class PowerUpSystem {
       buff.remaining -= dt;
 
       if (buff.remaining <= 0) {
-        // 移除 buff
         this.player[buff.buffKey] = false;
-        this._activeBuffs.splice(i, 1);
+        this._activeBuffs[i] = this._activeBuffs[this._activeBuffs.length - 1];
+        this._activeBuffs.pop();
 
         // 通知 buff 过期
         this.gameState.showNotification(`${buff.icon} ${buff.name} 已过期`);
