@@ -190,7 +190,7 @@ export class FlightPhysics {
       player.mesh.position.y = groundHeight; 
       player.takeDamage(9999); // 直接击杀
       if (this.onGroundCrash) {
-        this.onGroundCrash(player.mesh.position.clone());
+        this.onGroundCrash(this._tmpCenter.copy(player.mesh.position));
       }
     }
 

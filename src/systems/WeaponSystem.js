@@ -47,6 +47,9 @@ export class WeaponSystem {
     this._tmpScatterDir = new THREE.Vector3();
     this._tmpBackward = new THREE.Vector3();
 
+    // 锁定检测复用向量
+    this._tmpToEnemy = new THREE.Vector3();
+
     // 缓存列表（避免每帧 filter）
     this._cachedPlayerBullets = [];
     this._cachedPlayerBulletsDirty = true;
@@ -123,7 +126,7 @@ export class WeaponSystem {
     let bestScore = -1;
 
     for (const enemy of enemies) {
-      const toEnemy = new THREE.Vector3().subVectors(enemy.mesh.position, playerPos);
+      const toEnemy = this._tmpToEnemy.subVectors(enemy.mesh.position, playerPos);
       const dist = toEnemy.length();
 
       // 距离过远跳过

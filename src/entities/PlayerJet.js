@@ -38,6 +38,11 @@ export class PlayerJet {
     // 引擎喷口引用（用于发光效果）
     this.nozzle = null;
 
+    // 预分配方向向量，避免 getForward/getRight/getUp 每次 new
+    this._fwd = new THREE.Vector3();
+    this._right = new THREE.Vector3();
+    this._up = new THREE.Vector3();
+
     // 加载 GLB 模型
     this._loadModel();
 
@@ -128,27 +133,21 @@ export class PlayerJet {
    * 获取前方方向向量
    */
   getForward() {
-    const forward = new THREE.Vector3(0, 0, 1);
-    forward.applyQuaternion(this.mesh.quaternion);
-    return forward;
+    return this._fwd.set(0, 0, 1).applyQuaternion(this.mesh.quaternion);
   }
 
   /**
    * 获取右方方向向量
    */
   getRight() {
-    const right = new THREE.Vector3(1, 0, 0);
-    right.applyQuaternion(this.mesh.quaternion);
-    return right;
+    return this._right.set(1, 0, 0).applyQuaternion(this.mesh.quaternion);
   }
 
   /**
    * 获取上方方向向量
    */
   getUp() {
-    const up = new THREE.Vector3(0, 1, 0);
-    up.applyQuaternion(this.mesh.quaternion);
-    return up;
+    return this._up.set(0, 1, 0).applyQuaternion(this.mesh.quaternion);
   }
 
   /**

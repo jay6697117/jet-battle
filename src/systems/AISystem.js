@@ -35,6 +35,12 @@ export class AISystem {
     this._tmpBulletDir = new THREE.Vector3();
     this._tmpToTargetNorm = new THREE.Vector3();
 
+    // 射击用的位置/方向向量（Bullet 构造函数会直接存引用，所以需要每次 copy 到专用向量）
+    this._tmpFirePos = new THREE.Vector3();
+    this._tmpFireDir = new THREE.Vector3();
+    // 坠毁回调复用向量
+    this._tmpCrashPos = new THREE.Vector3();
+
     // 缓存的存活敌机列表（避免每帧 filter）
     this._cachedAliveEnemies = [];
     this._cachedAliveEnemiesDirty = true;
@@ -301,7 +307,7 @@ export class AISystem {
       enemy.takeDamage(9999);
       this._cachedAliveEnemiesDirty = true;
       if (this.onEnemyGroundCrash) {
-        this.onEnemyGroundCrash(enemy.mesh.position.clone());
+        this.onEnemyGroundCrash(this._tmpCrashPos.copy(enemy.mesh.position));
       }
     }
   }

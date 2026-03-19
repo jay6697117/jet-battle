@@ -33,6 +33,9 @@ export class CollisionSystem {
     this._cachedPlayerBullets = [];
     this._cachedPlayerMissiles = [];
     this._cachedEnemyBullets = [];
+
+    // 预分配位置复用向量，避免回调中 clone
+    this._tmpClonePos = new THREE.Vector3();
   }
 
   /**
@@ -72,7 +75,7 @@ export class CollisionSystem {
           if (enemy.isDestroyed) {
             this.gameState.addKill();
             if (this.onEnemyKilled) {
-              this.onEnemyKilled(enemy.mesh.position.clone());
+              this.onEnemyKilled(this._tmpClonePos.copy(enemy.mesh.position));
             }
           }
           break;
@@ -100,7 +103,7 @@ export class CollisionSystem {
           if (enemy.isDestroyed) {
             this.gameState.addKill();
             if (this.onEnemyKilled) {
-              this.onEnemyKilled(enemy.mesh.position.clone());
+              this.onEnemyKilled(this._tmpClonePos.copy(enemy.mesh.position));
             }
           }
           break;
@@ -131,7 +134,7 @@ export class CollisionSystem {
         if (this.player.isDestroyed) {
           this.gameState.addDeath();
           if (this.onPlayerKilled) {
-            this.onPlayerKilled(this.player.mesh.position.clone());
+            this.onPlayerKilled(this._tmpClonePos.copy(this.player.mesh.position));
           }
         }
       }
@@ -156,7 +159,7 @@ export class CollisionSystem {
 
           if (enemy.isDestroyed) {
             if (this.onEnemyKilledByEnemy) {
-              this.onEnemyKilledByEnemy(enemy.mesh.position.clone());
+              this.onEnemyKilledByEnemy(this._tmpClonePos.copy(enemy.mesh.position));
             }
           }
           break;
@@ -187,14 +190,14 @@ export class CollisionSystem {
         if (enemy.isDestroyed) {
           this.gameState.addKill();
           if (this.onEnemyKilled) {
-            this.onEnemyKilled(enemy.mesh.position.clone());
+            this.onEnemyKilled(this._tmpClonePos.copy(enemy.mesh.position));
           }
         }
 
         if (this.player.isDestroyed) {
           this.gameState.addDeath();
           if (this.onPlayerKilled) {
-            this.onPlayerKilled(this.player.mesh.position.clone());
+            this.onPlayerKilled(this._tmpClonePos.copy(this.player.mesh.position));
           }
         }
       }
@@ -219,10 +222,10 @@ export class CollisionSystem {
           b.takeDamage(15);
 
           if (a.isDestroyed && this.onEnemyKilledByEnemy) {
-            this.onEnemyKilledByEnemy(a.mesh.position.clone());
+            this.onEnemyKilledByEnemy(this._tmpClonePos.copy(a.mesh.position));
           }
           if (b.isDestroyed && this.onEnemyKilledByEnemy) {
-            this.onEnemyKilledByEnemy(b.mesh.position.clone());
+            this.onEnemyKilledByEnemy(this._tmpClonePos.copy(b.mesh.position));
           }
         }
       }

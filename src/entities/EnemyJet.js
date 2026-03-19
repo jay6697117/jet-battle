@@ -20,6 +20,9 @@ export class EnemyJet {
     this._waypointIndex = 0;
     this._fireTimer = 0;
 
+    // 预分配方向向量，避免 getForward 每次 new
+    this._fwd = new THREE.Vector3();
+
     // 巡逻路径点
     this._waypoints = this._generateWaypoints(position);
 
@@ -107,9 +110,7 @@ export class EnemyJet {
    * 获取前方方向
    */
   getForward() {
-    const fwd = new THREE.Vector3(0, 0, 1);
-    fwd.applyQuaternion(this.mesh.quaternion);
-    return fwd;
+    return this._fwd.set(0, 0, 1).applyQuaternion(this.mesh.quaternion);
   }
 
   /**
