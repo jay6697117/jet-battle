@@ -153,61 +153,135 @@ body > canvas {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 500;
-  background: rgba(0, 10, 20, 0.92);
-  border: 1px solid rgba(0, 255, 136, 0.3);
-  padding: 30px 40px;
-  max-width: 420px;
-  width: 90%;
-  backdrop-filter: blur(10px);
-  cursor: pointer;
-  max-height: 80vh;
+  background: rgba(0, 10, 20, 0.94);
+  border: 1px solid rgba(0, 255, 136, 0.35);
+  padding: 36px 48px 28px;
+  max-width: 700px;
+  width: 92%;
+  backdrop-filter: blur(14px);
+  max-height: 85vh;
   overflow-y: auto;
+  box-shadow:
+    0 0 40px rgba(0, 255, 136, 0.08),
+    0 0 80px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(0, 255, 136, 0.1);
+  animation: panelFadeIn 0.3s ease-out;
+}
+
+@keyframes panelFadeIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* 右上角关闭按钮 */
+.instructions-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  pointer-events: all;
+  line-height: 1;
+  padding: 0;
+}
+
+.instructions-close-btn:hover {
+  background: rgba(255, 60, 60, 0.2);
+  border-color: rgba(255, 60, 60, 0.5);
+  color: #ff6666;
+  box-shadow: 0 0 12px rgba(255, 60, 60, 0.2);
 }
 
 #instructions-panel h2 {
   font-family: 'Black Ops One', cursive;
-  font-size: 28px;
+  font-size: 30px;
   color: #00ff88;
-  margin-bottom: 16px;
+  margin-bottom: 4px;
   text-align: center;
+  text-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+.instructions-subtitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  letter-spacing: 6px;
+  color: rgba(0, 255, 136, 0.4);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+/* 双列网格布局 */
+.controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 32px;
+}
+
+.controls-column {
+  display: flex;
+  flex-direction: column;
 }
 
 #instructions-panel h3 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 13px;
-  color: rgba(0, 255, 136, 0.6);
+  font-size: 12px;
+  color: rgba(0, 255, 136, 0.65);
   letter-spacing: 2px;
   margin-top: 14px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(0, 255, 136, 0.12);
+}
+
+.controls-column h3:first-child {
+  margin-top: 0;
 }
 
 .control-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3px 0;
-  font-size: 15px;
+  padding: 4px 0;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.8);
 }
 
 .control-row .key {
   display: inline-block;
-  min-width: 60px;
-  padding: 2px 8px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 3px;
+  min-width: 56px;
+  padding: 3px 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 4px;
   text-align: center;
   font-family: 'Orbitron', sans-serif;
-  font-size: 12px;
+  font-size: 11px;
   color: #00ff88;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .close-hint {
-  margin-top: 16px;
+  margin-top: 20px;
   text-align: center;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.25);
+  letter-spacing: 2px;
+  animation: hintPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes hintPulse {
+  from { opacity: 0.4; }
+  to   { opacity: 0.8; }
 }
 
 /* ======================================
@@ -295,41 +369,12 @@ body > canvas {
   border-color: rgba(255, 100, 100, 0.3);
 }
 
-/* 弹药图标 Tooltip 提示 */
-.hud-ammo-item[data-tooltip] {
-  position: relative;
-  pointer-events: auto;
-  cursor: default;
-}
-
-.hud-ammo-item[data-tooltip]::after {
-  content: attr(data-tooltip);
-  position: absolute;
-  right: calc(100% + 8px);
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 4px 10px;
-  background: rgba(0, 10, 20, 0.92);
-  border: 1px solid rgba(0, 255, 136, 0.4);
-  color: rgba(0, 255, 136, 0.9);
+/* 弹药图标标签 */
+.hud-ammo-label {
   font-family: 'Orbitron', sans-serif;
-  font-size: 11px;
+  font-size: 10px;
   letter-spacing: 1px;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.2s ease;
-  z-index: 10;
-}
-
-/* PC 端：鼠标悬浮显示 */
-.hud-ammo-item[data-tooltip]:hover::after {
-  opacity: 1;
-}
-
-/* 移动端：点击显示（通过 JS 添加 .tooltip-active 类） */
-.hud-ammo-item[data-tooltip].tooltip-active::after {
-  opacity: 1;
+  color: rgba(0, 255, 136, 0.5);
 }
 
 /* 左下 - 状态条 */

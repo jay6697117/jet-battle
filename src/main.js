@@ -70,9 +70,6 @@ function init() {
 
   // 绑定全局快捷键
   setupGlobalKeys();
-
-  // 初始化弹药图标 tooltip（移动端点击支持）
-  setupAmmoTooltips();
 }
 
 /**
@@ -103,11 +100,26 @@ function setupMainMenu() {
     });
   }
 
-  // 点击操控说明面板关闭
+  // 关闭操控说明面板（关闭按钮 + 任意键盘按键）
   if (instructionsPanel) {
-    instructionsPanel.addEventListener('click', () => {
+    const closePanel = () => {
       instructionsPanel.style.display = 'none';
-    });
+    };
+    // 关闭按钮
+    const closeBtn = document.getElementById('instructions-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closePanel();
+      });
+    }
+    // 任意键关闭
+    const onKeyClose = (e) => {
+      if (instructionsPanel.style.display !== 'none') {
+        closePanel();
+      }
+    };
+    window.addEventListener('keydown', onKeyClose);
   }
 }
 
@@ -123,37 +135,6 @@ function setupGlobalKeys() {
     if (e.code === 'Tab' && gameState) {
       e.preventDefault();
       gameState.toggleLeaderboard();
-    }
-  });
-}
-
-/**
- * 初始化弹药图标 tooltip（移动端点击切换显示）
- */
-function setupAmmoTooltips() {
-  const items = document.querySelectorAll('.hud-ammo-item[data-tooltip]');
-  let hideTimer = null;
-
-  items.forEach(item => {
-    item.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      // 清除之前的计时器
-      if (hideTimer) clearTimeout(hideTimer);
-      // 先移除所有 tooltip
-      items.forEach(i => i.classList.remove('tooltip-active'));
-      // 显示当前 tooltip
-      item.classList.add('tooltip-active');
-      // 2 秒后自动隐藏
-      hideTimer = setTimeout(() => {
-        item.classList.remove('tooltip-active');
-      }, 2000);
-    });
-  });
-
-  // 点击其他区域隐藏 tooltip
-  document.addEventListener('touchstart', (e) => {
-    if (!e.target.closest('.hud-ammo-item[data-tooltip]')) {
-      items.forEach(i => i.classList.remove('tooltip-active'));
     }
   });
 }

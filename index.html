@@ -32,31 +32,41 @@
 
     <!-- 操控说明面板 -->
     <div id="instructions-panel" style="display:none;">
+      <button id="instructions-close" class="instructions-close-btn" title="关闭">✕</button>
       <h2>德黑兰的反击</h2>
-      <h3>飞行操控：</h3>
-      <div class="control-row"><span class="key">W</span><span>爬升</span></div>
-      <div class="control-row"><span class="key">S</span><span>俯冲</span></div>
-      <div class="control-row"><span class="key">A</span><span>左转</span></div>
-      <div class="control-row"><span class="key">D</span><span>右转</span></div>
-      <div class="control-row"><span class="key">←</span><span>左滚转</span></div>
-      <div class="control-row"><span class="key">→</span><span>右滚转</span></div>
-      <h3>油门控制：</h3>
-      <div class="control-row"><span class="key">↑</span><span>加速（油门+1档）</span></div>
-      <div class="control-row"><span class="key">↓</span><span>减速（油门-1档）</span></div>
-      <div class="control-row"><span class="key">Shift</span><span>Boost 加速</span></div>
-      <h3>战斗操作：</h3>
-      <div class="control-row"><span class="key">Space</span><span>机枪射击</span></div>
-      <div class="control-row"><span class="key">E</span><span>发射导弹</span></div>
-      <div class="control-row"><span class="key">Q</span><span>释放干扰弹</span></div>
-      <h3>其他：</h3>
-      <div class="control-row"><span class="key">G</span><span>自动导航（飞向最近敌机）</span></div>
-      <div class="control-row"><span class="key">F</span><span>自动稳定</span></div>
-      <div class="control-row"><span class="key">N</span><span>生成敌机</span></div>
-      <div class="control-row"><span class="key">R</span><span>重生</span></div>
-      <div class="control-row"><span class="key">Tab</span><span>排行榜</span></div>
-      <div class="control-row"><span class="key">ESC</span><span>设置菜单</span></div>
-      <div class="control-row"><span class="key">F3</span><span>调试面板</span></div>
-      <p class="close-hint">点击此面板关闭</p>
+      <p class="instructions-subtitle">操控指南</p>
+      <div class="controls-grid">
+        <!-- 左列 -->
+        <div class="controls-column">
+          <h3>飞行操控</h3>
+          <div class="control-row"><span class="key">W</span><span>爬升</span></div>
+          <div class="control-row"><span class="key">S</span><span>俯冲</span></div>
+          <div class="control-row"><span class="key">A</span><span>左转</span></div>
+          <div class="control-row"><span class="key">D</span><span>右转</span></div>
+          <div class="control-row"><span class="key">←</span><span>左滚转</span></div>
+          <div class="control-row"><span class="key">→</span><span>右滚转</span></div>
+          <h3>油门控制</h3>
+          <div class="control-row"><span class="key">↑</span><span>加速（油门+1档）</span></div>
+          <div class="control-row"><span class="key">↓</span><span>减速（油门-1档）</span></div>
+          <div class="control-row"><span class="key">Shift</span><span>Boost 加速</span></div>
+        </div>
+        <!-- 右列 -->
+        <div class="controls-column">
+          <h3>战斗操作</h3>
+          <div class="control-row"><span class="key">Space</span><span>机枪射击</span></div>
+          <div class="control-row"><span class="key">E</span><span>发射导弹</span></div>
+          <div class="control-row"><span class="key">Q</span><span>释放干扰弹</span></div>
+          <h3>辅助功能</h3>
+          <div class="control-row"><span class="key">G</span><span>自动导航</span></div>
+          <div class="control-row"><span class="key">F</span><span>自动稳定</span></div>
+          <div class="control-row"><span class="key">N</span><span>生成敌机</span></div>
+          <div class="control-row"><span class="key">R</span><span>重生</span></div>
+          <div class="control-row"><span class="key">Tab</span><span>排行榜</span></div>
+          <div class="control-row"><span class="key">ESC</span><span>设置菜单</span></div>
+          <div class="control-row"><span class="key">F3</span><span>调试面板</span></div>
+        </div>
+      </div>
+      <p class="close-hint">按任意键开始战斗</p>
     </div>
 
     <!-- HUD 界面 -->
@@ -85,19 +95,23 @@
 
       <!-- 右上：弹药信息 -->
       <div id="hud-top-right">
-        <div class="hud-ammo-item" data-tooltip="导弹数量">
+        <div class="hud-ammo-item">
+          <span class="hud-ammo-label">导弹</span>
           <span class="hud-ammo-icon">🚀</span>
           <span class="hud-ammo-value" id="hud-missiles">6</span>
         </div>
-        <div class="hud-ammo-item" data-tooltip="干扰弹数量">
+        <div class="hud-ammo-item">
+          <span class="hud-ammo-label">干扰弹</span>
           <span class="hud-ammo-icon">✦</span>
           <span class="hud-ammo-value" id="hud-flares">4</span>
         </div>
-        <div class="hud-ammo-item enemy-count" data-tooltip="敌机数量">
+        <div class="hud-ammo-item enemy-count">
+          <span class="hud-ammo-label">敌机</span>
           <span class="hud-ammo-icon">🎯</span>
           <span class="hud-ammo-value" id="hud-enemies">0</span>
         </div>
-        <div class="hud-ammo-item" data-tooltip="击杀进度">
+        <div class="hud-ammo-item">
+          <span class="hud-ammo-label">击杀</span>
           <span class="hud-ammo-icon">⚔</span>
           <span class="hud-ammo-value" id="hud-level-kills">0/1</span>
         </div>
