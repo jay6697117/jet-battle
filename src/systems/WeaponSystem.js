@@ -89,8 +89,9 @@ export class WeaponSystem {
     // === 更新自动锁定 ===
     this._updateAutoLock(dt);
 
-    // === 导弹发射（必须先锁定目标） ===
-    if (kb.isJustPressed('KeyE')) {
+    // === 导弹发射（键盘 E 或触摸导弹按钮，必须先锁定目标） ===
+    const wantMissile = kb.isJustPressed('KeyE') || (this.touchInput && this.touchInput.isMissileFiring);
+    if (wantMissile) {
       if (p.missiles <= 0) {
         // 没导弹了，不做任何操作
       } else if (!this.isLocked || !this.lockTarget) {
@@ -102,8 +103,9 @@ export class WeaponSystem {
       }
     }
 
-    // === 干扰弹 ===
-    if (kb.isJustPressed('KeyQ') && p.flares > 0) {
+    // === 干扰弹（键盘 Q 或双指触摸） ===
+    const wantFlare = (kb.isJustPressed('KeyQ') || (this.touchInput && this.touchInput.isFlareReleasing)) && p.flares > 0;
+    if (wantFlare) {
       this._releaseFlare();
     }
 

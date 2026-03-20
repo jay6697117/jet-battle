@@ -140,10 +140,15 @@ export class FlightPhysics {
     if (touch && touch.isMobile) {
       this._yawInput = -touch.stickX;
       this._pitchInput = invertY ? -touch.stickY : touch.stickY;
+
+      // 陀螺仪滚转控制
+      if (Math.abs(touch.gyroRoll) > 0.05) {
+        this._rollInput = -touch.gyroRoll;
+      }
     }
 
-    // 自动稳定（F 键）
-    if (kb.isPressed('KeyF')) {
+    // 自动稳定（F 键 或 长按摇杆）
+    if (kb.isPressed('KeyF') || (touch && touch.isAutoStabilizing)) {
       this._autoStabilize(dt);
     }
 

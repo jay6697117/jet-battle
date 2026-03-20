@@ -1221,3 +1221,197 @@ body > canvas {
   display: block;
   transition: opacity 0.05s;
 }
+
+/* ======================================
+   移动端新增控制元素
+   ====================================== */
+
+/* PC/移动端显隐控制 */
+.menu-footer-mobile,
+.controls-mobile,
+.close-hint-mobile {
+  display: none;
+}
+
+body.is-mobile .menu-footer-desktop,
+body.is-mobile .controls-desktop,
+body.is-mobile .close-hint-desktop {
+  display: none;
+}
+
+body.is-mobile .menu-footer-mobile {
+  display: block;
+}
+
+body.is-mobile .controls-mobile {
+  display: grid;
+}
+
+body.is-mobile .close-hint-mobile {
+  display: block;
+}
+
+/* 导弹按钮（开火按钮上方） */
+#mobile-missile {
+  position: fixed;
+  bottom: 200px;
+  right: 35px;
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(50, 120, 255, 0.25);
+  border: 2px solid rgba(80, 150, 255, 0.6);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  pointer-events: all;
+  box-shadow: 0 0 15px rgba(50, 120, 255, 0.2);
+  transition: all 0.15s ease;
+}
+
+#mobile-missile.active {
+  background: rgba(50, 120, 255, 0.55);
+  border-color: rgba(120, 180, 255, 0.9);
+  box-shadow: 0 0 25px rgba(50, 120, 255, 0.5);
+  transform: scale(0.92);
+}
+
+/* 死亡重生按钮 */
+#mobile-respawn {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  pointer-events: all;
+}
+
+.respawn-text {
+  font-family: 'Black Ops One', cursive;
+  font-size: 36px;
+  color: #ff3333;
+  text-shadow: 0 0 20px rgba(255, 0, 0, 0.6);
+  letter-spacing: 4px;
+}
+
+.respawn-btn {
+  padding: 16px 48px;
+  background: rgba(0, 255, 136, 0.15);
+  border: 2px solid rgba(0, 255, 136, 0.6);
+  color: #00ff88;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 18px;
+  letter-spacing: 3px;
+  cursor: pointer;
+  animation: respawnBtnPulse 1.5s ease-in-out infinite alternate;
+  transition: all 0.2s;
+}
+
+.respawn-btn:active {
+  background: rgba(0, 255, 136, 0.35);
+  transform: scale(0.95);
+}
+
+@keyframes respawnBtnPulse {
+  from {
+    border-color: rgba(0, 255, 136, 0.4);
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
+  }
+  to {
+    border-color: rgba(0, 255, 136, 0.8);
+    box-shadow: 0 0 25px rgba(0, 255, 136, 0.3);
+  }
+}
+
+/* 干扰弹闪光反馈 */
+#mobile-flare-flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 160;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+#mobile-flare-flash.active {
+  opacity: 1;
+  border: 6px solid rgba(255, 255, 255, 0.7);
+  background: radial-gradient(ellipse at center, rgba(255, 255, 200, 0.15) 0%, transparent 60%);
+  animation: flareFlashAnim 0.3s ease-out;
+}
+
+@keyframes flareFlashAnim {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 摇杆长按自动稳定 - 视觉反馈 */
+.joystick-handle.stabilizing {
+  background: rgba(50, 150, 255, 0.6) !important;
+  border-color: rgba(100, 180, 255, 0.9) !important;
+  box-shadow: 0 0 20px rgba(50, 150, 255, 0.5);
+  animation: stabilizePulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes stabilizePulse {
+  from { box-shadow: 0 0 10px rgba(50, 150, 255, 0.3); }
+  to { box-shadow: 0 0 25px rgba(50, 150, 255, 0.6); }
+}
+
+/* 雷达双击自动导航 - 视觉反馈 */
+#hud-radar.nav-active {
+  border-color: rgba(0, 255, 136, 0.9) !important;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.4) !important;
+}
+
+/* 手势版操控指南样式 */
+.gesture-key {
+  font-size: 18px !important;
+  min-width: 40px !important;
+  text-align: center;
+  background: none !important;
+  border: none !important;
+  padding: 4px 6px !important;
+}
+
+/* 移动端 media query 扩展 */
+@media (max-width: 768px) {
+  /* 导弹按钮移动端微调 */
+  #mobile-missile {
+    bottom: 190px;
+    right: 30px;
+    width: 65px;
+    height: 65px;
+    font-size: 24px;
+  }
+
+  /* HUD 左上角可点击提示 */
+  body.is-mobile #hud-top-left {
+    cursor: pointer;
+    pointer-events: all;
+  }
+
+  /* HUD 底部栏可滑动提示 */
+  body.is-mobile #hud-bottom-center {
+    pointer-events: all;
+  }
+
+  /* 操控指南面板移动端适配 */
+  body.is-mobile #instructions-panel {
+    padding: 20px;
+    width: 92%;
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+}

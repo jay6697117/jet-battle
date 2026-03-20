@@ -241,6 +241,10 @@ function startGame() {
     screenEffects.showDeath();
     game.timeScale = 0.3; // 慢动作效果
     gameState.showNotification('你被击落了！按 R 重试本关');
+    // 移动端显示重生按钮
+    if (touchInput && touchInput.isMobile) {
+      touchInput.showRespawn(true);
+    }
   };
 
   // 玩家撞地面坠毁 → 爆炸 + 慢动作 + 死亡屏幕
@@ -251,6 +255,10 @@ function startGame() {
     game.timeScale = 0.3;
     gameState.addDeath();
     gameState.showNotification('坠机了！按 R 重试本关');
+    // 移动端显示重生按钮
+    if (touchInput && touchInput.isMobile) {
+      touchInput.showRespawn(true);
+    }
   };
 
   // 敌机撞地面坠毁 → 爆炸特效 + 音效
@@ -275,6 +283,7 @@ function startGame() {
     update(dt, elapsed) {
       // 1. 更新输入状态
       keyboard.update();
+      if (touchInput) touchInput.update();
 
       // 2. 飞行物理
       flightPhysics.update(dt);
@@ -349,8 +358,9 @@ function startGame() {
  * 处理快捷键
  */
 function handleHotkeys() {
-  // R 键重试本关
-  if (keyboard.isJustPressed('KeyR') && player) {
+  // R 键重试本关（键盘或触摸重生按钮）
+  const wantRespawn = (keyboard.isJustPressed('KeyR') || (touchInput && touchInput.isRespawning)) && player;
+  if (wantRespawn) {
     player.respawn();
     gameState.respawn();
     game.timeScale = 1.0; // 恢复正常速度
@@ -359,6 +369,10 @@ function handleHotkeys() {
     if (screenEffects) {
       screenEffects.showRespawn();
       screenEffects.hideLevelResult();
+    }
+    // 隐藏移动端重生按钮
+    if (touchInput && touchInput.isMobile) {
+      touchInput.showRespawn(false);
     }
     // 重试当前关卡
     if (waveSystem) {
@@ -369,8 +383,9 @@ function handleHotkeys() {
     }
   }
 
-  // G 键切换自动导航模式
-  if (keyboard.isJustPressed('KeyG') && flightPhysics && aiSystem) {
+  // G 键切换自动导航模式（键盘或双击雷达）
+  const wantAutoNav = (keyboard.isJustPressed('KeyG') || (touchInput && touchInput.isAutoNavToggled)) && flightPhysics && aiSystem;
+  if (wantAutoNav) {
     const result = flightPhysics.toggleAutoNav(aiSystem);
     if (result === 'on') {
       gameState.showNotification('🧭 自动导航已开启');
@@ -386,6 +401,16 @@ function handleHotkeys() {
     const count = aiSystem.spawnWave();
     console.log(`[Jet Battle] 生成 ${count} 架敌机！`);
     gameState.showNotification(`+${count} 架敌机来袭！`);
+  }
+
+  // 移动端排行榜切换（底部上滑）
+  if (touchInput && touchInput.isLeaderboardToggled && gameState) {
+    gameState.toggleLeaderboard();
+  }
+
+  // 移动端设置菜单（点击左上角）
+  if (touchInput && touchInput.isSettingsToggled && settingsManager) {
+    settingsManager.toggle();
   }
 }
 

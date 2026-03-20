@@ -24,8 +24,11 @@
             <span class="btn-desc">对战 AI 敌机</span>
           </button>
         </div>
-        <div class="menu-footer">
+        <div class="menu-footer menu-footer-desktop">
           <span>WASD 飞行 | ←→ 滚转 | ↑↓ 油门 | Space 射击 | E 导弹</span>
+        </div>
+        <div class="menu-footer menu-footer-mobile">
+          <span>摇杆飞行 | 滑杆油门 | 点击射击和发射导弹</span>
         </div>
       </div>
     </div>
@@ -35,7 +38,8 @@
       <button id="instructions-close" class="instructions-close-btn" title="关闭">✕</button>
       <h2>德黑兰的反击</h2>
       <p class="instructions-subtitle">操控指南</p>
-      <div class="controls-grid">
+      <!-- PC 端操控指南 -->
+      <div class="controls-grid controls-desktop">
         <!-- 左列 -->
         <div class="controls-column">
           <h3>飞行操控</h3>
@@ -66,7 +70,31 @@
           <div class="control-row"><span class="key">F3</span><span>调试面板</span></div>
         </div>
       </div>
-      <p class="close-hint">按任意键开始战斗</p>
+      <p class="close-hint close-hint-desktop">按任意键开始战斗</p>
+
+      <!-- 移动端操控指南 -->
+      <div class="controls-grid controls-mobile">
+        <div class="controls-column">
+          <h3>飞行操控</h3>
+          <div class="control-row"><span class="key gesture-key">🕹️</span><span>摇杆方向控制</span></div>
+          <div class="control-row"><span class="key gesture-key">📱</span><span>倾斜手机滚转</span></div>
+          <h3>油门控制</h3>
+          <div class="control-row"><span class="key gesture-key">🎚️</span><span>油门滑杆加减速</span></div>
+          <div class="control-row"><span class="key gesture-key">🔝</span><span>油门&gt;90% Boost</span></div>
+        </div>
+        <div class="controls-column">
+          <h3>战斗操作</h3>
+          <div class="control-row"><span class="key gesture-key">🔴</span><span>开火按钮 机枪</span></div>
+          <div class="control-row"><span class="key gesture-key">🔵</span><span>导弹按钮 发射</span></div>
+          <div class="control-row"><span class="key gesture-key">✌️</span><span>双指点击 干扰弹</span></div>
+          <h3>辅助功能</h3>
+          <div class="control-row"><span class="key gesture-key">👆👆</span><span>双击雷达 导航</span></div>
+          <div class="control-row"><span class="key gesture-key">👊</span><span>长按摇杆 稳定</span></div>
+          <div class="control-row"><span class="key gesture-key">⬆️</span><span>底部上滑 排行榜</span></div>
+          <div class="control-row"><span class="key gesture-key">⚙️</span><span>左上角 设置菜单</span></div>
+        </div>
+      </div>
+      <p class="close-hint close-hint-mobile">点击屏幕开始战斗</p>
     </div>
 
     <!-- HUD 界面 -->
@@ -253,7 +281,17 @@
       <div class="throttle-handle"></div>
       <div class="throttle-label">油门</div>
     </div>
+    <div id="mobile-missile" style="display:none;">🚀</div>
     <div id="mobile-fire" style="display:none;">开火</div>
+
+    <!-- 移动端死亡重生按钮 -->
+    <div id="mobile-respawn" style="display:none;">
+      <div class="respawn-text">已阵亡</div>
+      <button class="respawn-btn">点击重生</button>
+    </div>
+
+    <!-- 移动端干扰弹闪光反馈 -->
+    <div id="mobile-flare-flash"></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>
