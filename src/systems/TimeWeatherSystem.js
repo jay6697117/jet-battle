@@ -55,8 +55,13 @@ const PHASES = {
 export class TimeWeatherSystem {
   constructor(world) {
     this.world = world;
-    this.gameHour = 14; // Default starts at 2 PM
-    this.timeSpeed = 1 / 60; // 1 real minute = 1 game hour
+
+    // 尝试从浏览器本地存储读取上次的时间
+    const savedTime = localStorage.getItem('jetBattle_gameHour');
+    this.gameHour = savedTime !== null ? parseFloat(savedTime) : 14; // Default starts at 2 PM
+
+    // 一天 = 现实中 6 分钟 (24 小时 / 6 分钟 = 4 游戏小时/每现实分钟 => 4/60 = 1/15)
+    this.timeSpeed = 1 / 15;
 
     this.weather = 'clear'; // 'clear' | 'rain'
     this.weatherTimer = 60 + Math.random() * 60; // Random seconds until potential weather change
@@ -78,6 +83,13 @@ export class TimeWeatherSystem {
       fogColor: new THREE.Color(),
       fogFar: 8000
     };
+
+    // 预分配颜色对象，避免每帧 GC 垃圾回收（避免 new THREE.Color()）
+    this._oceanRainColor = new THREE.Color(0x2a3e4a);
+    this._oceanDuskColor = new THREE.Color(0x004466);
+    this._oceanDayColor = new THREE.Color(0x006994);
+    this._cloudWhiteColor = new THREE.Color(0xffffff);
+    this._tmpCloudColor = new THREE.Color();
 
     // Copy initial setup directly
     this._copyPhaseToCurrent(PHASES.day);
@@ -132,11 +144,11 @@ export class TimeWeatherSystem {
       w._oceanMat.uniforms.uSunColor.value.copy(this.currentParams.sunColor);
       // Determine ocean base color based on sky/weather
       if (this.weather === 'rain') {
-        w._oceanMat.uniforms.uColor.value.lerp(new THREE.Color(0x2a3e4a), 0.05); // dark grey-blue
+        w._oceanMat.uniforms.uColor.value.lerp(this._oceanRainColor, 0.05); // dark grey-blue
       } else if (this.gameHour >= 17 && this.gameHour < 19.5) {
-        w._oceanMat.uniforms.uColor.value.lerp(new THREE.Color(0x004466), 0.05); // sunset deep blue
+        w._oceanMat.uniforms.uColor.value.lerp(this._oceanDuskColor, 0.05); // sunset deep blue
       } else {
-        w._oceanMat.uniforms.uColor.value.lerp(new THREE.Color(0x006994), 0.05); // day vibrant blue
+        w._oceanMat.uniforms.uColor.value.lerp(this._oceanDayColor, 0.05); // day vibrant blue
       }
     }
 
@@ -172,11 +184,11 @@ export class TimeWeatherSystem {
     }
 
     // Clouds tint
-    const cloudColor = this.currentParams.sunColor.clone().lerp(new THREE.Color(0xffffff), 0.5);
+    this._tmpCloudColor.copy(this.currentParams.sunColor).lerp(this._cloudWhiteColor, 0.5);
     w.clouds.forEach(group => {
       group.children.forEach(mesh => {
         if (mesh.material && mesh.material.color) {
-          mesh.material.color.copy(cloudColor);
+          mesh.material.color.copy(this._tmpCloudColor);
         }
       });
     });
@@ -214,5 +226,12 @@ export class TimeWeatherSystem {
 
     // 4. Apply to World
     this._applyToWorld();
+
+    // 5. 每隔 1 真实秒保存一次时间到本地存储
+    this._saveTimer = (this._saveTimer || 0) + dt;
+    if (this._saveTimer >= 1.0) {
+      this._saveTimer = 0;
+      localStorage.setItem('jetBattle_gameHour', this.gameHour.toString());
+    }
   }
 }

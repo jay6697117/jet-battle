@@ -23,6 +23,10 @@ export class ParticleSystem {
 
     // 复用临时向量，避免每帧 new
     this._tmpVec = new THREE.Vector3();
+
+    // 预创建固定雨滴特效容器，避免每帧都向数组 push 新对象
+    this._rainEffect = { particles: [], type: 'rain' };
+    this._effects.push(this._rainEffect);
   }
 
   /**
@@ -259,7 +263,10 @@ export class ParticleSystem {
     }
 
     if (particles.length > 0) {
-      this._effects.push({ particles, type: 'rain' });
+      // 不再凭空制造对象引发 GC，而是直接推送复用的持久对象里面
+      for (let i = 0; i < particles.length; i++) {
+        this._rainEffect.particles.push(particles[i]);
+      }
     }
   }
 
@@ -278,7 +285,9 @@ export class ParticleSystem {
         if (particle.life >= particle.maxLife) {
           // 归还到池中（不销毁）
           this._release(particle);
-          effect.particles.splice(p, 1);
+          // O(1) 的删除方法（Swap and Pop），比 splice 速度快，避免元素前移产生的内存消耗
+          effect.particles[p] = effect.particles[effect.particles.length - 1];
+          effect.particles.pop();
           continue;
         }
 
@@ -320,7 +329,7 @@ export class ParticleSystem {
         }
       }
 
-      if (allDead || effect.particles.length === 0) {
+      if (effect.type !== 'rain' && (allDead || effect.particles.length === 0)) {
         this._effects.splice(e, 1);
       }
     }
