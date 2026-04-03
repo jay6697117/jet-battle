@@ -51,6 +51,39 @@ body > canvas {
   overflow: hidden;
 }
 
+/* 语言切换按钮 */
+.lang-toggle-btn {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  z-index: 20;
+  padding: 6px 16px;
+  background: rgba(0, 15, 30, 0.7);
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  color: #00ff88;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(8px);
+  text-transform: uppercase;
+  clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px);
+}
+
+.lang-toggle-btn:hover {
+  background: rgba(0, 255, 136, 0.15);
+  border-color: #00ff88;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3), inset 0 0 10px rgba(0, 255, 136, 0.1);
+}
+
+.lang-toggle-btn:active {
+  transform: scale(0.95);
+}
+
 /* 动效扫描线 */
 .menu-bg-scanlines {
   position: absolute;
@@ -144,7 +177,9 @@ body > canvas {
   position: relative;
   z-index: 10;
   text-align: center;
-  padding: 60px 100px;
+  padding: 60px 80px;
+  width: 580px;
+  max-width: 92vw;
   background: rgba(0, 15, 25, 0.6);
   border: 1px solid rgba(0, 255, 136, 0.2);
   box-shadow: 0 0 50px rgba(0, 255, 136, 0.1);
@@ -170,9 +205,9 @@ body > canvas {
 
 .menu-title {
   font-family: 'Black Ops One', 'Noto Sans SC', sans-serif;
-  font-size: 72px;
-  letter-spacing: 6px;
-  line-height: 1.2;
+  font-size: clamp(42px, 8vw, 72px);
+  letter-spacing: 4px;
+  line-height: 1.15;
   color: #fff;
   text-shadow:
     0 0 10px rgba(0, 255, 136, 0.8),
@@ -182,6 +217,8 @@ body > canvas {
   margin-bottom: 12px;
   position: relative;
   display: inline-block;
+  max-width: 100%;
+  word-break: break-word;
   animation: neonFlicker 4s infinite alternate, titleGlitchSkew 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 

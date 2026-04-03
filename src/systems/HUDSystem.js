@@ -1,4 +1,5 @@
 import { CONFIG } from '../utils/Config.js';
+import i18n from '../i18n/I18n.js';
 
 /**
  * HUD 更新系统
@@ -208,14 +209,14 @@ export class HUDSystem {
       const ws = this.weaponSystem;
       let text, cls;
       if (ws.isLocked && ws.lockTarget) {
-        text = '已锁定 ✓';
+        text = i18n.t('hud_lock_locked');
         cls = 'hud-lock-status locked';
       } else if (ws.lockTarget && ws.lockProgress > 0) {
         const remaining = ((1 - ws.lockProgress) * CONFIG.weapons.missile.lockTime).toFixed(1);
-        text = `锁定中 ${remaining}s`;
+        text = i18n.t('hud_lock_locking', [remaining]);
         cls = 'hud-lock-status locking';
       } else {
-        text = '无目标';
+        text = i18n.t('hud_lock_none');
         cls = 'hud-lock-status no-target';
       }
       if (c.lockText !== text) {

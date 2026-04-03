@@ -21,6 +21,7 @@ import { DebugPanel } from './systems/DebugPanel.js';
 import { AudioManager } from './audio/AudioManager.js';
 import { SettingsManager } from './game/SettingsManager.js';
 import { CONFIG } from './utils/Config.js';
+import i18n from './i18n/I18n.js';
 
 /**
  * Jet Battle — 主入口
@@ -58,6 +59,30 @@ let _trailPos = null;
  * 初始化游戏
  */
 function init() {
+  // 初始化 i18n 国际化系统
+  i18n.init();
+
+  // 绑定语言切换按钮
+  const langBtn = document.getElementById('lang-toggle');
+  if (langBtn) {
+    langBtn.addEventListener('click', () => {
+      i18n.toggleLocale();
+      // 更新标题 data-text 属性（用于 CSS 伪元素特效）
+      const titleEl = document.querySelector('.menu-title');
+      if (titleEl) {
+        titleEl.setAttribute('data-text', i18n.t('menu_title') + i18n.t('menu_title_br'));
+      }
+    });
+  }
+
+  // 提前检测移动端，让主菜单就能显示正确的操作说明
+  const isMobile = ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints > 0) ||
+    (window.innerWidth <= 768);
+  if (isMobile) {
+    document.body.classList.add('is-mobile');
+  }
+
   // 创建游戏实例（会自动搭建场景）
   game = new Game();
   gameState = new GameState();
@@ -68,6 +93,9 @@ function init() {
   // 创建设置管理器
   settingsManager = new SettingsManager(game, audioManager);
   settingsManager.onRestart = performRespawn;
+
+  // 同步已保存的音效设置到音频管理器
+  audioManager.setEnabled(settingsManager.settings.soundEnabled);
 
   // 先启动渲染循环显示背景场景
   game.start();
@@ -98,9 +126,6 @@ function setupMainMenu() {
 
       // 显示 HUD
       hudOverlay.style.display = 'block';
-
-      // 显示静音切换按钮（音频已默认开启，不需要 enabler 按钮）
-      document.getElementById('sound-toggle').style.display = 'block';
 
       // 开始游戏逻辑
       startGame();
@@ -211,14 +236,14 @@ function startGame() {
   weaponSystem.onGunFire = () => audioManager.playGunFire();
   weaponSystem.onMissileLaunch = () => audioManager.playMissileLaunch();
   weaponSystem.onFlareRelease = () => audioManager.playFlare();
-  weaponSystem.onMissileLockFail = () => gameState.showNotification('未锁定目标！');
+  weaponSystem.onMissileLockFail = () => gameState.showNotification(i18n.t('notif_no_lock'));
 
   // 敌机被玩家击杀 → 爆炸特效 + 音效 + 屏幕闪绿 + 击杀计数 + 关卡计数
   collisionSystem.onEnemyKilled = (pos) => {
     particleSystem.createExplosion(pos, 1.5);
     audioManager.playExplosion();
     screenEffects.flashKill(gameState.kills);
-    gameState.showNotification('击落敌机！');
+    gameState.showNotification(i18n.t('notif_enemy_down'));
     waveSystem.addPlayerKill(); // 通知关卡系统
     // 击杀掉落盲盒
     if (powerUpSystem) powerUpSystem.tryKillDrop(pos);
@@ -243,7 +268,7 @@ function startGame() {
     audioManager.playExplosion();
     screenEffects.showDeath();
     game.timeScale = 0.3; // 慢动作效果
-    gameState.showNotification('你被击落了！按 R 重试本关');
+    gameState.showNotification(i18n.t('notif_player_killed'));
     // 移动端显示重生按钮
     if (touchInput && touchInput.isMobile) {
       touchInput.showRespawn(true);
@@ -257,7 +282,7 @@ function startGame() {
     screenEffects.showDeath();
     game.timeScale = 0.3;
     gameState.addDeath();
-    gameState.showNotification('坠机了！按 R 重试本关');
+    gameState.showNotification(i18n.t('notif_player_crash'));
     // 移动端显示重生按钮
     if (touchInput && touchInput.isMobile) {
       touchInput.showRespawn(true);
@@ -410,19 +435,19 @@ function handleHotkeys() {
   if (wantAutoNav) {
     const result = flightPhysics.toggleAutoNav(aiSystem);
     if (result === 'on') {
-      gameState.showNotification('🧭 自动导航已开启');
+      gameState.showNotification(i18n.t('notif_autonav_on'));
     } else if (result === 'off') {
-      gameState.showNotification('自动导航已关闭');
+      gameState.showNotification(i18n.t('notif_autonav_off'));
     } else if (result === 'no_target') {
-      gameState.showNotification('⚠ 无可用目标');
+      gameState.showNotification(i18n.t('notif_autonav_no_target'));
     }
   }
 
   // N 键生成敌机（调试用）
   if (keyboard.isJustPressed('KeyN') && aiSystem) {
     const count = aiSystem.spawnWave();
-    console.log(`[Jet Battle] 生成 ${count} 架敌机！`);
-    gameState.showNotification(`+${count} 架敌机来袭！`);
+    console.log(`[Jet Battle] Spawned ${count} enemies`);
+    gameState.showNotification(i18n.t('notif_enemy_incoming', [count]));
   }
 
   // 移动端排行榜切换（底部上滑）

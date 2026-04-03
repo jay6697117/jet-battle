@@ -13,9 +13,6 @@ export class AudioManager {
 
     // 浏览器策略：需要用户交互才能恢复 AudioContext
     this._setupAutoResume();
-
-    // 绑定静音切换按钮
-    this._setupSoundToggle();
   }
 
   /**
@@ -39,15 +36,13 @@ export class AudioManager {
   }
 
   /**
-   * 绑定静音切换按钮
+   * 设置音效开关（来自设置菜单）
    */
-  _setupSoundToggle() {
-    const toggleBtn = document.getElementById('sound-toggle');
-    if (toggleBtn) {
-      toggleBtn.addEventListener('click', () => {
-        this.enabled = !this.enabled;
-        toggleBtn.textContent = this.enabled ? '🔊' : '🔇';
-      });
+  setEnabled(enabled) {
+    this.enabled = enabled;
+    // 控制引擎声的静音/恢复
+    if (this._engineGain) {
+      this._engineGain.gain.value = enabled ? this.masterVolume * 0.05 : 0;
     }
   }
 
@@ -58,11 +53,6 @@ export class AudioManager {
     try {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
       this.enabled = true;
-
-      // 更新静音按钮
-      const toggleBtn = document.getElementById('sound-toggle');
-      if (toggleBtn) toggleBtn.textContent = '🔊';
-
       console.log('[Audio] 音频已启用');
     } catch (e) {
       console.warn('[Audio] 无法初始化 Web Audio:', e);
@@ -257,6 +247,11 @@ export class AudioManager {
   updateEngine(throttlePercent) {
     if (!this._engineOsc) return;
     this._engineOsc.frequency.value = 40 + throttlePercent * 120;
+    // 音效关闭时引擎静音
+    if (!this.enabled) {
+      this._engineGain.gain.value = 0;
+      return;
+    }
     this._engineGain.gain.value = this.masterVolume * (0.03 + throttlePercent * 0.04);
   }
 }

@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { CONFIG } from '../utils/Config.js';
 import { PowerUpBox } from '../entities/PowerUpBox.js';
+import i18n from '../i18n/I18n.js';
 
 /**
  * 盲盒道具系统
@@ -23,27 +24,27 @@ export class PowerUpSystem {
     this._spawnTimer = 0;
     this._nextSpawnInterval = this._randomInterval();
 
-    // === 道具池 ===
+    // === 道具池（使用 i18n key） ===
     this._powerUpPool = {
       common: [
-        { id: 'heal', name: '急救包', icon: '❤️', desc: '+30 HP', instant: true },
-        { id: 'flare_refill', name: '干扰弹补给', icon: '🎆', desc: '+2 干扰弹', instant: true },
-        { id: 'cooldown_boost', name: '冷却强化', icon: '❄️', desc: '冷却速率×3', instant: false, buffKey: '_buffCooldown' },
+        { id: 'heal', nameKey: 'powerup_heal', icon: '❤️', descKey: 'powerup_desc_heal', instant: true },
+        { id: 'flare_refill', nameKey: 'powerup_flare_refill', icon: '🎆', descKey: 'powerup_desc_flare_refill', instant: true },
+        { id: 'cooldown_boost', nameKey: 'powerup_cooldown_boost', icon: '❄️', descKey: 'powerup_desc_cooldown_boost', instant: false, buffKey: '_buffCooldown' },
       ],
       rare: [
-        { id: 'missile_refill', name: '导弹补给', icon: '🚀', desc: '+N 导弹', instant: true },
-        { id: 'no_overheat', name: '无限火力', icon: '🔥', desc: '机枪不过热', instant: false, buffKey: '_buffNoOverheat' },
-        { id: 'infinite_boost', name: '无限加力', icon: '⚡', desc: 'Boost 不消耗', instant: false, buffKey: '_buffInfiniteBoost' },
+        { id: 'missile_refill', nameKey: 'powerup_missile_refill', icon: '🚀', descKey: 'powerup_desc_missile_refill', instant: true },
+        { id: 'no_overheat', nameKey: 'powerup_no_overheat', icon: '🔥', descKey: 'powerup_desc_no_overheat', instant: false, buffKey: '_buffNoOverheat' },
+        { id: 'infinite_boost', nameKey: 'powerup_infinite_boost', icon: '⚡', descKey: 'powerup_desc_infinite_boost', instant: false, buffKey: '_buffInfiniteBoost' },
       ],
       epic: [
-        { id: 'double_damage', name: '双倍伤害', icon: '💥', desc: '伤害×2', instant: false, buffKey: '_buffDoubleDamage' },
-        { id: 'speed_boost', name: '极速模式', icon: '🏎️', desc: '最高速度×1.8', instant: false, buffKey: '_buffSpeedBoost' },
-        { id: 'scatter_shot', name: '散射弹幕', icon: '🌟', desc: '三发散射', instant: false, buffKey: '_buffScatterShot' },
+        { id: 'double_damage', nameKey: 'powerup_double_damage', icon: '💥', descKey: 'powerup_desc_double_damage', instant: false, buffKey: '_buffDoubleDamage' },
+        { id: 'speed_boost', nameKey: 'powerup_speed_boost', icon: '🏎️', descKey: 'powerup_desc_speed_boost', instant: false, buffKey: '_buffSpeedBoost' },
+        { id: 'scatter_shot', nameKey: 'powerup_scatter_shot', icon: '🌟', descKey: 'powerup_desc_scatter_shot', instant: false, buffKey: '_buffScatterShot' },
       ],
       legendary: [
-        { id: 'invincible', name: '无敌护甲', icon: '🛡️', desc: '免疫伤害', instant: false, buffKey: '_buffInvincible' },
-        { id: 'time_slow', name: '时间减速', icon: '⏳', desc: '敌机减速50%', instant: false, buffKey: '_buffTimeSlow' },
-        { id: 'full_restore', name: '全满补给', icon: '🎁', desc: '全部回满', instant: true },
+        { id: 'invincible', nameKey: 'powerup_invincible', icon: '🛡️', descKey: 'powerup_desc_invincible', instant: false, buffKey: '_buffInvincible' },
+        { id: 'time_slow', nameKey: 'powerup_time_slow', icon: '⌛', descKey: 'powerup_desc_time_slow', instant: false, buffKey: '_buffTimeSlow' },
+        { id: 'full_restore', nameKey: 'powerup_full_restore', icon: '🎁', descKey: 'powerup_desc_full_restore', instant: true },
       ],
     };
   }
@@ -87,7 +88,7 @@ export class PowerUpSystem {
 
     // 显示关卡奖励通知
     const rarityName = CONFIG.powerUp.rarityNames[rarity];
-    this._showPowerUpNotification(powerUp, rarity, `关卡 ${level} 奖励`);
+    this._showPowerUpNotification(powerUp, rarity, i18n.t('notif_level_reward', [level]));
   }
 
   /**
@@ -222,7 +223,7 @@ export class PowerUpSystem {
           const count = 2 + Math.floor(Math.random() * 3); // 2-4 枚
           p.missiles = Math.min(p.missiles + count, CONFIG.weapons.missile.maxCount + 4);
           // 更新描述
-          powerUpDef.desc = `+${count} 导弹`;
+          powerUpDef._dynamicDesc = i18n.t('powerup_desc_missile_refill', [count]);
           break;
         }
         case 'full_restore':
@@ -251,7 +252,7 @@ export class PowerUpSystem {
         const color = '#' + new THREE.Color(CONFIG.powerUp.rarityColors[rarity]).getHexString();
         this._activeBuffs.push({
           id: powerUpDef.id,
-          name: powerUpDef.name,
+          name: i18n.t(powerUpDef.nameKey),
           icon: powerUpDef.icon,
           buffKey: powerUpDef.buffKey,
           duration: duration,
@@ -276,7 +277,7 @@ export class PowerUpSystem {
         this._activeBuffs.pop();
 
         // 通知 buff 过期
-        this.gameState.showNotification(`${buff.icon} ${buff.name} 已过期`);
+        this.gameState.showNotification(i18n.t('notif_buff_expired', [buff.icon, buff.name]));
       }
     }
   }
@@ -334,7 +335,7 @@ export class PowerUpSystem {
     notif.innerHTML = `
       <div style="font-size:28px;margin-bottom:4px">${powerUp.icon}</div>
       <div>${prefixText}${rarityName}</div>
-      <div style="font-size:14px;opacity:0.8;margin-top:2px">${powerUp.name} — ${powerUp.desc}</div>
+      <div style="font-size:14px;opacity:0.8;margin-top:2px">${i18n.t(powerUp.nameKey)} — ${powerUp._dynamicDesc || i18n.t(powerUp.descKey)}</div>
     `;
 
     document.body.appendChild(notif);

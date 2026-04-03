@@ -1,3 +1,5 @@
+import i18n from '../i18n/I18n.js';
+
 /**
  * 屏幕效果系统（增强版）
  * 管理受击闪红、击杀闪绿、死亡全屏、重生动画等
@@ -26,8 +28,8 @@ export class ScreenEffects {
     this._deathOverlay.className = 'screen-effect death-overlay';
     this._deathOverlay.innerHTML = `
       <div class="death-content">
-        <div class="death-title">战机被毁</div>
-        <div class="death-subtitle">按 R 键重试本关</div>
+        <div class="death-title" data-i18n="death_title">${i18n.t('death_title')}</div>
+        <div class="death-subtitle" data-i18n="death_subtitle">${i18n.t('death_subtitle')}</div>
       </div>
     `;
     document.body.appendChild(this._deathOverlay);
@@ -77,7 +79,7 @@ export class ScreenEffects {
 
     // 击杀弹出
     if (killCount !== undefined) {
-      this._killPopup.textContent = `击杀 #${killCount}`;
+      this._killPopup.textContent = i18n.t('kill_popup', [killCount]);
       this._killPopup.classList.add('active');
       setTimeout(() => this._killPopup.classList.remove('active'), 1500);
     }
@@ -113,7 +115,7 @@ export class ScreenEffects {
    */
   showWave(waveNum) {
     const textEl = this._waveOverlay.querySelector('.wave-text');
-    textEl.textContent = `第 ${waveNum} 关`;
+    textEl.textContent = i18n.t('wave_n', [waveNum]);
     this._waveOverlay.classList.add('active');
     setTimeout(() => this._waveOverlay.classList.remove('active'), 2500);
   }
@@ -123,7 +125,7 @@ export class ScreenEffects {
    */
   showCountdown(seconds) {
     const textEl = this._waveOverlay.querySelector('.wave-text');
-    textEl.textContent = `下一关: ${seconds}s`;
+    textEl.textContent = i18n.t('next_wave', [seconds]);
     this._waveOverlay.classList.add('active');
     setTimeout(() => this._waveOverlay.classList.remove('active'), 1000);
   }
@@ -133,7 +135,7 @@ export class ScreenEffects {
    */
   showLevelStart(level, enemyCount, requiredKills) {
     const textEl = this._waveOverlay.querySelector('.wave-text');
-    textEl.innerHTML = `第 ${level} 关<br><span style="font-size:0.5em;opacity:0.8">${enemyCount} 架敌机 · 至少击杀 ${requiredKills} 架</span>`;
+    textEl.innerHTML = `${i18n.t('level_start', [level])}<br><span style="font-size:0.5em;opacity:0.8">${i18n.t('level_start_detail', [enemyCount, requiredKills])}</span>`;
     this._waveOverlay.classList.add('active');
     setTimeout(() => this._waveOverlay.classList.remove('active'), 3000);
   }
@@ -143,7 +145,7 @@ export class ScreenEffects {
    */
   showLevelComplete(level) {
     const textEl = this._levelResultOverlay.querySelector('.wave-text');
-    textEl.innerHTML = `<span style="color:#00ff88">✓ 第 ${level} 关通过！</span>`;
+    textEl.innerHTML = `<span style="color:#00ff88">${i18n.t('level_complete', [level])}</span>`;
     this._levelResultOverlay.classList.add('active');
     setTimeout(() => this._levelResultOverlay.classList.remove('active'), 3000);
   }
@@ -153,7 +155,7 @@ export class ScreenEffects {
    */
   showLevelFailed(reason) {
     const textEl = this._levelResultOverlay.querySelector('.wave-text');
-    textEl.innerHTML = `<span style="color:#ff4444">✗ 关卡失败</span><br><span style="font-size:0.5em;opacity:0.8">${reason}<br>按 R 键重试</span>`;
+    textEl.innerHTML = `<span style="color:#ff4444">${i18n.t('level_failed')}</span><br><span style="font-size:0.5em;opacity:0.8">${reason}<br>${i18n.t('level_retry_hint')}</span>`;
     this._levelResultOverlay.classList.add('active');
     // 失败提示不自动消失，等重试时手动隐藏
   }

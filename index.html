@@ -17,6 +17,9 @@
       <div class="menu-bg-scanlines"></div>
       <div class="menu-bg-grid"></div>
 
+      <!-- 语言切换按钮 -->
+      <button id="lang-toggle" class="lang-toggle-btn" data-i18n="lang_btn">中文</button>
+
       <!-- 战机巡航动画 -->
       <div class="jet-animation" id="jet-1">
         <svg viewBox="0 0 100 100" fill="rgba(0, 255, 136, 0.4)"><polygon points="50,5 55,25 70,45 95,65 95,70 70,60 60,85 75,95 75,100 50,90 25,100 25,95 40,85 30,60 5,70 5,65 30,45 45,25" /></svg>
@@ -28,87 +31,86 @@
         <svg viewBox="0 0 100 100" fill="rgba(0, 255, 136, 0.3)"><polygon points="50,5 55,25 70,45 95,65 95,70 70,60 60,85 75,95 75,100 50,90 25,100 25,95 40,85 30,60 5,70 5,65 30,45 45,25" /></svg>
       </div>
       <div class="menu-content">
-        <h1 class="menu-title" data-text="德黑兰的反击">德黑兰的<br>反击</h1>
-        <p class="menu-subtitle">[ SYSTEM ONLINE / 现代空战 ]</p>
+        <h1 class="menu-title" data-text="德黑兰的反击"><span data-i18n="menu_title">德黑兰的</span><br><span data-i18n="menu_title_br">反击</span></h1>
+        <p class="menu-subtitle" data-i18n="menu_subtitle">[ SYSTEM ONLINE / 现代空战 ]</p>
         <div class="menu-buttons">
           <button id="btn-solo" class="menu-btn menu-btn-primary">
             <span class="btn-icon">✈</span>
-            <span class="btn-text">单人任务</span>
-            <span class="btn-desc">对战 AI 敌机</span>
+            <span class="btn-text" data-i18n="btn_solo">单人任务</span>
+            <span class="btn-desc" data-i18n="btn_solo_desc">对战 AI 敌机</span>
           </button>
         </div>
         <div class="menu-footer menu-footer-desktop">
-          <span>WASD 飞行 | ←→ 滚转 | ↑↓ 油门 | Space 射击 | E 导弹 | H 帮助</span>
+          <span data-i18n="menu_footer_desktop">WASD 飞行 | ←→ 滚转 | ↑↓ 油门 | Space 射击 | E 导弹</span>
         </div>
         <div class="menu-footer menu-footer-mobile">
-          <span>摇杆飞行 | 滑杆油门 | 点击射击和发射导弹 | 设置中查看帮助</span>
+          <span data-i18n="menu_footer_mobile">摇杆飞行 | 滑杆油门 | 点击射击和发射导弹</span>
         </div>
       </div>
     </div>
 
     <!-- 操控说明面板 -->
     <div id="instructions-panel" style="display:none;">
-      <button id="instructions-close" class="instructions-close-btn" title="关闭">✕</button>
-      <h2>德黑兰的反击</h2>
-      <p class="instructions-subtitle">操控指南</p>
+      <button id="instructions-close" class="instructions-close-btn" data-i18n="close" data-i18n-attr="title" title="关闭">✕</button>
+      <h2 data-i18n="instructions_title">德黑兰的反击</h2>
+      <p class="instructions-subtitle" data-i18n="instructions_subtitle">操控指南</p>
       <!-- PC 端操控指南 -->
       <div class="controls-grid controls-desktop">
         <!-- 左列 -->
         <div class="controls-column">
-          <h3>飞行操控</h3>
-          <div class="control-row"><span class="key">W</span><span>爬升</span></div>
-          <div class="control-row"><span class="key">S</span><span>俯冲</span></div>
-          <div class="control-row"><span class="key">A</span><span>左转</span></div>
-          <div class="control-row"><span class="key">D</span><span>右转</span></div>
-          <div class="control-row"><span class="key">←</span><span>左滚转</span></div>
-          <div class="control-row"><span class="key">→</span><span>右滚转</span></div>
-          <h3>油门控制</h3>
-          <div class="control-row"><span class="key">↑</span><span>加速（油门+1档）</span></div>
-          <div class="control-row"><span class="key">↓</span><span>减速（油门-1档）</span></div>
-          <div class="control-row"><span class="key">Shift</span><span>增强加速</span></div>
+          <h3 data-i18n="ctrl_flight">飞行操控</h3>
+          <div class="control-row"><span class="key">W</span><span data-i18n="ctrl_climb">爬升</span></div>
+          <div class="control-row"><span class="key">S</span><span data-i18n="ctrl_dive">俯冲</span></div>
+          <div class="control-row"><span class="key">A</span><span data-i18n="ctrl_left">左转</span></div>
+          <div class="control-row"><span class="key">D</span><span data-i18n="ctrl_right">右转</span></div>
+          <div class="control-row"><span class="key">←</span><span data-i18n="ctrl_roll_left">左滚转</span></div>
+          <div class="control-row"><span class="key">→</span><span data-i18n="ctrl_roll_right">右滚转</span></div>
+          <h3 data-i18n="ctrl_throttle">油门控制</h3>
+          <div class="control-row"><span class="key">↑</span><span data-i18n="ctrl_accel">加速（油门+1档）</span></div>
+          <div class="control-row"><span class="key">↓</span><span data-i18n="ctrl_decel">减速（油门-1档）</span></div>
+          <div class="control-row"><span class="key">Shift</span><span data-i18n="ctrl_boost">增强加速</span></div>
         </div>
         <!-- 右列 -->
         <div class="controls-column">
-          <h3>战斗操作</h3>
-          <div class="control-row"><span class="key">Space</span><span>机枪射击</span></div>
-          <div class="control-row"><span class="key">E</span><span>发射导弹</span></div>
-          <div class="control-row"><span class="key">Q</span><span>释放干扰弹</span></div>
-          <h3>辅助功能</h3>
-          <div class="control-row"><span class="key">G</span><span>自动导航</span></div>
-          <div class="control-row"><span class="key">F</span><span>自动稳定</span></div>
-          <div class="control-row"><span class="key">N</span><span>生成敌机</span></div>
-          <div class="control-row"><span class="key">R</span><span>重生</span></div>
-          <div class="control-row"><span class="key">Tab</span><span>排行榜</span></div>
-          <div class="control-row"><span class="key">H</span><span>操控说明</span></div>
-          <div class="control-row"><span class="key">ESC</span><span>设置菜单</span></div>
-          <div class="control-row"><span class="key">F3</span><span>调试面板</span></div>
+          <h3 data-i18n="ctrl_combat">战斗操作</h3>
+          <div class="control-row"><span class="key">Space</span><span data-i18n="ctrl_gun">机枪射击</span></div>
+          <div class="control-row"><span class="key">E</span><span data-i18n="ctrl_missile">发射导弹</span></div>
+          <div class="control-row"><span class="key">Q</span><span data-i18n="ctrl_flare">释放干扰弹</span></div>
+          <h3 data-i18n="ctrl_assist">辅助功能</h3>
+          <div class="control-row"><span class="key">G</span><span data-i18n="ctrl_autonav">自动导航</span></div>
+          <div class="control-row"><span class="key">F</span><span data-i18n="ctrl_stabilize">自动稳定</span></div>
+          <div class="control-row"><span class="key">N</span><span data-i18n="ctrl_spawn">生成敌机</span></div>
+          <div class="control-row"><span class="key">R</span><span data-i18n="ctrl_respawn">重生</span></div>
+          <div class="control-row"><span class="key">Tab</span><span data-i18n="ctrl_leaderboard">排行榜</span></div>
+          <div class="control-row"><span class="key">ESC</span><span data-i18n="ctrl_settings">设置菜单</span></div>
+          <div class="control-row"><span class="key">F3</span><span data-i18n="ctrl_debug">调试面板</span></div>
         </div>
       </div>
-      <p class="close-hint close-hint-desktop">按任意键开始战斗</p>
+      <p class="close-hint close-hint-desktop" data-i18n="ctrl_close_hint_desktop">按任意键开始战斗</p>
 
       <!-- 移动端操控指南 -->
       <div class="controls-grid controls-mobile">
         <div class="controls-column">
-          <h3>飞行操控</h3>
-          <div class="control-row"><span class="key gesture-key">🕹️</span><span>摇杆方向控制</span></div>
-          <div class="control-row"><span class="key gesture-key">📱</span><span>倾斜手机滚转</span></div>
-          <h3>油门控制</h3>
-          <div class="control-row"><span class="key gesture-key">🎚️</span><span>油门滑杆加减速</span></div>
-          <div class="control-row"><span class="key gesture-key">🔝</span><span>油门&gt;90% Boost</span></div>
+          <h3 data-i18n="ctrl_flight">飞行操控</h3>
+          <div class="control-row"><span class="key gesture-key">🕹️</span><span data-i18n="ctrl_joystick">摇杆方向控制</span></div>
+          <div class="control-row"><span class="key gesture-key">📱</span><span data-i18n="ctrl_tilt">倾斜手机滚转</span></div>
+          <h3 data-i18n="ctrl_throttle">油门控制</h3>
+          <div class="control-row"><span class="key gesture-key">🎚️</span><span data-i18n="ctrl_throttle_slider">油门滑杆加减速</span></div>
+          <div class="control-row"><span class="key gesture-key">🔝</span><span data-i18n="ctrl_throttle_boost">油门>90% Boost</span></div>
         </div>
         <div class="controls-column">
-          <h3>战斗操作</h3>
-          <div class="control-row"><span class="key gesture-key">🔴</span><span>开火按钮 机枪</span></div>
-          <div class="control-row"><span class="key gesture-key">🔵</span><span>导弹按钮 发射</span></div>
-          <div class="control-row"><span class="key gesture-key">✦</span><span>黄星按钮 干扰弹</span></div>
-          <h3>辅助功能</h3>
-          <div class="control-row"><span class="key gesture-key">👆👆</span><span>双击雷达 导航</span></div>
-          <div class="control-row"><span class="key gesture-key">👊</span><span>长按摇杆 稳定</span></div>
-          <div class="control-row"><span class="key gesture-key">⬆️</span><span>底部上滑 排行榜</span></div>
-          <div class="control-row"><span class="key gesture-key">⚙️</span><span>左上角 设置菜单</span></div>
+          <h3 data-i18n="ctrl_combat">战斗操作</h3>
+          <div class="control-row"><span class="key gesture-key">🔴</span><span data-i18n="ctrl_fire_btn">开火按钮 机枪</span></div>
+          <div class="control-row"><span class="key gesture-key">🔵</span><span data-i18n="ctrl_missile_btn">导弹按钮 发射</span></div>
+          <div class="control-row"><span class="key gesture-key">✦</span><span data-i18n="ctrl_flare_btn">黄星按钮 干扰弹</span></div>
+          <h3 data-i18n="ctrl_assist">辅助功能</h3>
+          <div class="control-row"><span class="key gesture-key">👆👆</span><span data-i18n="ctrl_radar_dbl">双击雷达 导航</span></div>
+          <div class="control-row"><span class="key gesture-key">👊</span><span data-i18n="ctrl_joystick_hold">长按摇杆 稳定</span></div>
+          <div class="control-row"><span class="key gesture-key">⬆️</span><span data-i18n="ctrl_swipe_up">底部上滑 排行榜</span></div>
+          <div class="control-row"><span class="key gesture-key">⚙️</span><span data-i18n="ctrl_settings_btn">左上角 设置菜单</span></div>
         </div>
       </div>
-      <p class="close-hint close-hint-mobile">点击屏幕开始战斗</p>
+      <p class="close-hint close-hint-mobile" data-i18n="ctrl_close_hint_mobile">点击屏幕开始战斗</p>
     </div>
 
     <!-- HUD 界面 -->
@@ -116,21 +118,21 @@
       <!-- 左上：飞行信息 -->
       <div id="hud-top-left">
         <div class="hud-info-item">
-          <span class="hud-label">速度</span>
+          <span class="hud-label" data-i18n="hud_speed">速度</span>
           <span class="hud-value" id="hud-speed">0</span>
           <span class="hud-unit">%</span>
         </div>
         <div class="hud-info-item">
-          <span class="hud-label">高度</span>
+          <span class="hud-label" data-i18n="hud_altitude">高度</span>
           <span class="hud-value" id="hud-altitude">0</span>
           <span class="hud-unit">m</span>
         </div>
         <div class="hud-info-item">
-          <span class="hud-label">油门</span>
+          <span class="hud-label" data-i18n="hud_throttle">油门</span>
           <span class="hud-value" id="hud-throttle">50%</span>
         </div>
         <div class="hud-info-item">
-          <span class="hud-label">关卡</span>
+          <span class="hud-label" data-i18n="hud_wave">关卡</span>
           <span class="hud-value" id="hud-wave">1</span>
         </div>
       </div>
@@ -138,22 +140,22 @@
       <!-- 右上：弹药信息 -->
       <div id="hud-top-right">
         <div class="hud-ammo-item">
-          <span class="hud-ammo-label">导弹</span>
+          <span class="hud-ammo-label" data-i18n="hud_missiles">导弹</span>
           <span class="hud-ammo-icon">🚀</span>
           <span class="hud-ammo-value" id="hud-missiles">6</span>
         </div>
         <div class="hud-ammo-item">
-          <span class="hud-ammo-label">干扰弹</span>
+          <span class="hud-ammo-label" data-i18n="hud_flares">干扰弹</span>
           <span class="hud-ammo-icon">✦</span>
           <span class="hud-ammo-value" id="hud-flares">4</span>
         </div>
         <div class="hud-ammo-item enemy-count">
-          <span class="hud-ammo-label">敌机</span>
+          <span class="hud-ammo-label" data-i18n="hud_enemies">敌机</span>
           <span class="hud-ammo-icon">🎯</span>
           <span class="hud-ammo-value" id="hud-enemies">0</span>
         </div>
         <div class="hud-ammo-item">
-          <span class="hud-ammo-label">击杀</span>
+          <span class="hud-ammo-label" data-i18n="hud_kills_label">击杀</span>
           <span class="hud-ammo-icon">⚔</span>
           <span class="hud-ammo-value" id="hud-level-kills">0/1</span>
         </div>
@@ -162,21 +164,21 @@
       <!-- 左下：状态条 -->
       <div id="hud-bottom-left">
         <div class="hud-bar-container">
-          <span class="hud-bar-label">生命值</span>
+          <span class="hud-bar-label" data-i18n="hud_health">生命值</span>
           <div class="hud-bar">
             <div class="hud-bar-fill health-bar" id="hud-health-bar" style="width:100%"></div>
           </div>
           <span class="hud-bar-value" id="hud-health-value">100%</span>
         </div>
         <div class="hud-bar-container">
-          <span class="hud-bar-label">热量</span>
+          <span class="hud-bar-label" data-i18n="hud_heat">热量</span>
           <div class="hud-bar">
             <div class="hud-bar-fill heat-bar" id="hud-heat-bar" style="width:0%"></div>
           </div>
           <span class="hud-bar-value" id="hud-heat-value">0%</span>
         </div>
         <div class="hud-bar-container">
-          <span class="hud-bar-label">加速槽</span>
+          <span class="hud-bar-label" data-i18n="hud_boost">加速槽</span>
           <div class="hud-bar">
             <div class="hud-bar-fill boost-bar" id="hud-boost-bar" style="width:100%"></div>
           </div>
@@ -186,9 +188,9 @@
 
       <!-- 底部中央：击杀统计 -->
       <div id="hud-bottom-center">
-        <span class="hud-stat">击杀: <strong id="hud-kills">0</strong></span>
-        <span class="hud-stat">阵亡: <strong id="hud-deaths">0</strong></span>
-        <span class="hud-stat">战损比: <strong id="hud-kd">0.0</strong></span>
+        <span class="hud-stat"><span data-i18n="hud_stat_kills">击杀</span>: <strong id="hud-kills">0</strong></span>
+        <span class="hud-stat"><span data-i18n="hud_stat_deaths">阵亡</span>: <strong id="hud-deaths">0</strong></span>
+        <span class="hud-stat"><span data-i18n="hud_stat_kd">战损比</span>: <strong id="hud-kd">0.0</strong></span>
       </div>
 
       <!-- 中心准星 -->
@@ -201,13 +203,13 @@
           <line x1="45" y1="30" x2="55" y2="30" stroke="rgba(0,255,136,0.8)" stroke-width="1" />
           <circle cx="30" cy="30" r="2" fill="rgba(0,255,136,0.9)" />
         </svg>
-        <div id="hud-lock-status" class="hud-lock-status no-target">无目标</div>
+        <div id="hud-lock-status" class="hud-lock-status no-target" data-i18n="hud_lock_none">无目标</div>
       </div>
 
       <!-- 自动导航指示器 -->
       <div id="hud-autonav" style="display:none;">
         <span class="autonav-icon">🧭</span>
-        <span class="autonav-text">自动导航</span>
+        <span class="autonav-text" data-i18n="hud_autonav">自动导航</span>
         <span class="autonav-distance" id="hud-autonav-dist"></span>
       </div>
 
@@ -229,58 +231,58 @@
     <!-- 排行榜 -->
     <div id="leaderboard-overlay" style="display:none;">
       <div class="leaderboard-panel">
-        <h2 class="leaderboard-title">排行榜</h2>
+        <h2 class="leaderboard-title" data-i18n="lb_title">排行榜</h2>
         <div class="leaderboard-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
           <table class="leaderboard-table">
             <thead>
               <tr>
-                <th>排名</th>
-                <th>飞行员</th>
-                <th>击杀</th>
-                <th>阵亡</th>
-                <th>战损比</th>
-                <th>存活时间</th>
+                <th data-i18n="lb_rank">排名</th>
+                <th data-i18n="lb_pilot">飞行员</th>
+                <th data-i18n="lb_kills">击杀</th>
+                <th data-i18n="lb_deaths">阵亡</th>
+                <th data-i18n="lb_kd">战损比</th>
+                <th data-i18n="lb_time">存活时间</th>
               </tr>
             </thead>
             <tbody id="leaderboard-body">
             </tbody>
           </table>
         </div>
-        <button id="leaderboard-close" class="settings-btn close-btn">关闭排行榜</button>
+        <button id="leaderboard-close" class="settings-btn close-btn" data-i18n="lb_close">关闭排行榜</button>
       </div>
     </div>
 
     <!-- 设置菜单 -->
     <div id="settings-menu" style="display:none;">
       <div class="settings-panel">
-        <h2 class="settings-title">设置</h2>
+        <h2 class="settings-title" data-i18n="settings_title">设置</h2>
         <div class="settings-group">
-          <label class="settings-label">画质</label>
+          <label class="settings-label" data-i18n="settings_quality">画质</label>
           <div class="settings-buttons">
-            <button id="settings-quality-low" class="settings-btn">低</button>
-            <button id="settings-quality-medium" class="settings-btn">中</button>
-            <button id="settings-quality-high" class="settings-btn active">高</button>
+            <button id="settings-quality-low" class="settings-btn" data-i18n="settings_quality_low">低</button>
+            <button id="settings-quality-medium" class="settings-btn" data-i18n="settings_quality_medium">中</button>
+            <button id="settings-quality-high" class="settings-btn active" data-i18n="settings_quality_high">高</button>
           </div>
         </div>
         <div class="settings-group">
-          <label class="settings-label">Y 轴反转</label>
-          <button id="settings-invert-y" class="settings-btn toggle-btn">关闭</button>
+          <label class="settings-label" data-i18n="settings_invert_y">Y 轴反转</label>
+          <button id="settings-invert-y" class="settings-btn toggle-btn" data-i18n="settings_off">关闭</button>
         </div>
         <div class="settings-group">
-          <label class="settings-label">音效</label>
-          <button id="settings-sound" class="settings-btn toggle-btn active">开启</button>
+          <label class="settings-label" data-i18n="settings_sound">音效</label>
+          <button id="settings-sound" class="settings-btn toggle-btn active" data-i18n="settings_on">开启</button>
         </div>
         <div class="settings-group" style="margin-top: 24px;">
-          <button id="settings-help" class="settings-btn" style="width: 100%; margin-bottom: 12px; border-color: rgba(0, 255, 136, 0.4); color: #00ff88; background: rgba(0, 255, 136, 0.1);">操控说明 (H)</button>
-          <button id="settings-restart" class="settings-btn" style="width: 100%; color: #ff3333; border-color: rgba(255, 50, 50, 0.4); background: rgba(255, 50, 50, 0.1);">重新开始比赛</button>
+          <button id="settings-help" class="settings-btn" style="width: 100%; margin-bottom: 12px; border-color: rgba(0, 255, 136, 0.4); color: #00ff88; background: rgba(0, 255, 136, 0.1);" data-i18n="settings_help">操控说明 (H)</button>
+          <button id="settings-restart" class="settings-btn" style="width: 100%; color: #ff3333; border-color: rgba(255, 50, 50, 0.4); background: rgba(255, 50, 50, 0.1);" data-i18n="settings_restart">重新开始比赛</button>
         </div>
-        <button id="settings-close" class="settings-btn close-btn">关闭设置 (ESC)</button>
+        <button id="settings-close" class="settings-btn close-btn" data-i18n="settings_close">关闭设置 (ESC)</button>
       </div>
     </div>
 
     <!-- 调试面板 -->
     <div id="debug-panel" style="display:none;">
-      <div class="debug-header">性能调试面板 <span class="debug-hint">F3 切换显示</span></div>
+      <div class="debug-header"><span data-i18n="debug_title">性能调试面板</span> <span class="debug-hint" data-i18n="debug_hint">F3 切换显示</span></div>
       <div id="debug-content"></div>
     </div>
 
@@ -288,7 +290,7 @@
     <div id="notifications-container"></div>
 
     <!-- 音频控制 -->
-    <button id="audio-enabler" style="display:none;">点击启用音频</button>
+    <button id="audio-enabler" style="display:none;" data-i18n="audio_enable">点击启用音频</button>
     <button id="sound-toggle" style="display:none;">🔊 (M)</button>
 
     <!-- 移动端控制 -->
@@ -300,16 +302,16 @@
     <div id="mobile-throttle" style="display:none;">
       <div class="throttle-track"></div>
       <div class="throttle-handle"></div>
-      <div class="throttle-label">油门</div>
+      <div class="throttle-label" data-i18n="mobile_throttle">油门</div>
     </div>
     <div id="mobile-missile" style="display:none;">🚀</div>
     <div id="mobile-flare" style="display:none;">✦</div>
-    <div id="mobile-fire" style="display:none;">开火</div>
+    <div id="mobile-fire" style="display:none;" data-i18n="mobile_fire">开火</div>
 
     <!-- 移动端死亡重生按钮 -->
     <div id="mobile-respawn" style="display:none;">
-      <div class="respawn-text">已阵亡</div>
-      <button class="respawn-btn">点击重生</button>
+      <div class="respawn-text" data-i18n="mobile_death">已阵亡</div>
+      <button class="respawn-btn" data-i18n="mobile_respawn">点击重生</button>
     </div>
 
     <!-- 移动端干扰弹闪光反馈 -->

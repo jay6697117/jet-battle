@@ -1,4 +1,5 @@
 import { CONFIG } from '../utils/Config.js';
+import i18n from '../i18n/I18n.js';
 
 /**
  * 关卡系统（原 WaveSystem）
@@ -156,7 +157,7 @@ export class WaveSystem {
           this._levelState = 'failed';
           if (this.screenEffects) {
             this.screenEffects.showLevelFailed(
-              `击杀不足！需要 ${this._requiredKills} 个，你击杀了 ${this._levelKills} 个`
+              i18n.t('level_failed_reason', [this._requiredKills, this._levelKills])
             );
           }
         }

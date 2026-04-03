@@ -1,3 +1,5 @@
+import i18n from '../i18n/I18n.js';
+
 /**
  * 游戏设置管理器
  * ESC 键打开/关闭设置菜单
@@ -151,14 +153,14 @@ export class SettingsManager {
     // Y 轴反转
     const invertBtn = document.getElementById('settings-invert-y');
     if (invertBtn) {
-      invertBtn.textContent = this.settings.invertY ? '开启' : '关闭';
+      invertBtn.textContent = this.settings.invertY ? i18n.t('settings_on') : i18n.t('settings_off');
       invertBtn.classList.toggle('active', this.settings.invertY);
     }
 
     // 音效
     const soundBtn = document.getElementById('settings-sound');
     if (soundBtn) {
-      soundBtn.textContent = this.settings.soundEnabled ? '开启' : '关闭';
+      soundBtn.textContent = this.settings.soundEnabled ? i18n.t('settings_on') : i18n.t('settings_off');
       soundBtn.classList.toggle('active', this.settings.soundEnabled);
     }
   }

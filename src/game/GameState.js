@@ -1,3 +1,5 @@
+import i18n from '../i18n/I18n.js';
+
 /**
  * 游戏状态管理
  * 管理 kills、deaths、得分、排行榜
@@ -50,7 +52,7 @@ export class GameState {
   respawn() {
     this.isAlive = true;
     this.respawnTimer = 0;
-    this._showNotification('已重生');
+    this._showNotification(i18n.t('notif_respawned'));
   }
 
   /**
@@ -93,7 +95,7 @@ export class GameState {
 
     // 当前游戏数据
     const currentEntry = {
-      pilot: '你',
+      pilot: i18n.t('pilot_you'),
       kills: this.kills,
       deaths: this.deaths,
       kd: this.getKD(),
@@ -139,7 +141,7 @@ export class GameState {
     if (this.kills === 0 && this.deaths === 0) return;
 
     const entry = {
-      pilot: `飞行员-${Date.now().toString(36).slice(-4).toUpperCase()}`,
+      pilot: `${i18n.t('pilot_prefix')}-${Date.now().toString(36).slice(-4).toUpperCase()}`,
       kills: this.kills,
       deaths: this.deaths,
       kd: this.getKD(),
