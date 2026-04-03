@@ -155,6 +155,7 @@ export default {
   powerup_invincible: '无敌护甲',
   powerup_time_slow: '时间减速',
   powerup_full_restore: '全满补给',
+  powerup_night_vision: '军用夜视仪',
 
   // === 道具描述 ===
   powerup_desc_heal: '+30 HP',
@@ -169,6 +170,7 @@ export default {
   powerup_desc_invincible: '免疫伤害',
   powerup_desc_time_slow: '敌机减速50%',
   powerup_desc_full_restore: '全部回满',
+  powerup_desc_night_vision: '突破黑夜，锁定猎物',
 
   // === 排行榜数据 ===
   pilot_you: '你',

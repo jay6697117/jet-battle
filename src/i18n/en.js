@@ -155,6 +155,7 @@ export default {
   powerup_invincible: 'Invincible',
   powerup_time_slow: 'Time Slow',
   powerup_full_restore: 'Full Restore',
+  powerup_night_vision: 'Night Vision',
 
   // === Power-up descriptions ===
   powerup_desc_heal: '+30 HP',
@@ -167,8 +168,9 @@ export default {
   powerup_desc_speed_boost: 'Max Speed ×1.8',
   powerup_desc_scatter_shot: 'Triple Scatter',
   powerup_desc_invincible: 'Immune to Damage',
-  powerup_desc_time_slow: 'Enemy Speed -50%',
-  powerup_desc_full_restore: 'Full Refill',
+  powerup_desc_time_slow: 'Enemies slowed by 50%',
+  powerup_desc_full_restore: 'Restore all stats',
+  powerup_desc_night_vision: 'See through the dark',
 
   // === Leaderboard data ===
   pilot_you: 'You',

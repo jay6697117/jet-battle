@@ -196,7 +196,11 @@ export class TimeWeatherSystem {
 
   update(dt, elapsed) {
     // 1. Update Game Time
-    this.gameHour += (dt / 60) * this.timeSpeed * 60; // e.g. 1 hour passed per real minute
+    // 如果处于夜晚 (19:30 ~ 06:00)，让时间流速加快 3 倍，缩短夜晚的持续时间
+    const isNight = this.gameHour >= 19.5 || this.gameHour < 6;
+    const currentSpeed = isNight ? this.timeSpeed * 3 : this.timeSpeed;
+    this.gameHour += (dt / 60) * currentSpeed * 60;
+
     if (this.gameHour >= 24) {
       this.gameHour -= 24;
     }
@@ -206,16 +210,20 @@ export class TimeWeatherSystem {
       this.rainDuration -= dt;
       if (this.rainDuration <= 0) {
         this.weather = 'clear';
-        this.weatherTimer = 60 + Math.random() * 120;
+        // 降低两次天气系统判定的间隔时间（从 1~3 分钟降至 0.5~1.5 分钟）
+        this.weatherTimer = 30 + Math.random() * 60;
       }
     } else {
       this.weatherTimer -= dt;
       if (this.weatherTimer <= 0) {
-        if (Math.random() < 0.3) {
+        // 提高降雨概率：从 30% 提高到 70%
+        if (Math.random() < 0.7) {
           this.weather = 'rain';
-          this.rainDuration = 60 + Math.random() * 60;
+          // 降雨持续时间：1 ~ 2.5 分钟
+          this.rainDuration = 60 + Math.random() * 90;
         } else {
-          this.weatherTimer = 30 + Math.random() * 60;
+          // 如果没下雨，等待再次判定的时间也缩短到 15~40 秒
+          this.weatherTimer = 15 + Math.random() * 25;
         }
       }
     }

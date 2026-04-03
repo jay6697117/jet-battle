@@ -106,6 +106,9 @@ export class PowerUpSystem {
       this.player[buff.buffKey] = false;
     }
     this._activeBuffs = [];
+    document.body.classList.remove('night-vision-on');
+    const cvs = document.querySelector('canvas');
+    if (cvs) cvs.classList.remove('night-vision-active');
   }
 
   // ===================== 内部方法 =====================
@@ -115,20 +118,47 @@ export class PowerUpSystem {
    */
   _updateMapSpawn(dt) {
     this._spawnTimer += dt;
+
+    let isNight = false;
+    if (window.game && window.game.timeWeatherSystem) {
+      const h = window.game.timeWeatherSystem.gameHour;
+      isNight = (h >= 19.5 || h < 6);
+    }
+
     if (this._spawnTimer >= this._nextSpawnInterval) {
       this._spawnTimer = 0;
-      this._nextSpawnInterval = this._randomInterval();
+      this._nextSpawnInterval = isNight ? (1 + Math.random() * 2) : this._randomInterval();
 
-      // 检查地图上的盲盒数量上限（用 for 计数替代 filter）
       let aliveCount = 0;
+      let nvCount = 0;
       for (let j = 0; j < this._boxes.length; j++) {
-        if (!this._boxes[j].isCollected) aliveCount++;
+        if (!this._boxes[j].isCollected) {
+          aliveCount++;
+          if (this._boxes[j].specialId === 'night_vision') nvCount++;
+        }
       }
-      if (aliveCount < CONFIG.powerUp.mapSpawn.maxOnMap) {
+
+      const maxOnMap = isNight ? 20 : CONFIG.powerUp.mapSpawn.maxOnMap;
+
+      if (aliveCount < maxOnMap) {
         const pos = this._randomSpawnPosition();
-        this._spawnBox(pos);
+        if (isNight && Math.random() < 0.8 && nvCount < 15) {
+          this._spawnSpecialBox(pos, 'legendary', 'night_vision');
+        } else {
+          this._spawnBox(pos);
+        }
       }
     }
+  }
+
+  /**
+   * 生成特殊专属盲盒
+   */
+  _spawnSpecialBox(position, rarity, specialId) {
+    const box = new PowerUpBox(position, rarity);
+    box.specialId = specialId;
+    this._boxes.push(box);
+    this.scene.add(box.mesh);
   }
 
   /**
@@ -183,7 +213,14 @@ export class PowerUpSystem {
     box.collect();
 
     const rarity = box.rarity;
-    const powerUp = this._rollPowerUp(rarity);
+    let powerUp;
+
+    if (box.specialId === 'night_vision') {
+      powerUp = { id: 'night_vision', nameKey: 'powerup_night_vision', icon: '🕶️', descKey: 'powerup_desc_night_vision', instant: false, buffKey: '_buffNightVision' };
+    } else {
+      powerUp = this._rollPowerUp(rarity);
+    }
+
     const color = CONFIG.powerUp.rarityColors[rarity];
 
     // 施加效果
@@ -259,6 +296,12 @@ export class PowerUpSystem {
           remaining: duration,
           color: color,
         });
+
+        if (powerUpDef.id === 'night_vision') {
+          document.body.classList.add('night-vision-on');
+          const cvs = document.querySelector('canvas');
+          if (cvs) cvs.classList.add('night-vision-active');
+        }
       }
     }
   }
@@ -273,6 +316,13 @@ export class PowerUpSystem {
 
       if (buff.remaining <= 0) {
         this.player[buff.buffKey] = false;
+
+        if (buff.id === 'night_vision') {
+          document.body.classList.remove('night-vision-on');
+          const cvs = document.querySelector('canvas');
+          if (cvs) cvs.classList.remove('night-vision-active');
+        }
+
         this._activeBuffs[i] = this._activeBuffs[this._activeBuffs.length - 1];
         this._activeBuffs.pop();
 
