@@ -12,7 +12,7 @@ export class ParticleSystem {
 
     // === 对象池 ===
     this._pool = [];
-    this._poolSize = 300;  // 预分配数量
+    this._poolSize = 1000;  // 增加池大小以容纳雨滴
     this._activeCount = 0;
 
     // 共享几何体（小球）
@@ -46,6 +46,7 @@ export class ParticleSystem {
         isFlash: false,
         isTrail: false,
         isPowerUp: false,
+        isRain: false,
         active: false,
       });
     }
@@ -64,6 +65,7 @@ export class ParticleSystem {
         p.isFlash = false;
         p.isTrail = false;
         p.isPowerUp = false;
+        p.isRain = false;
         this._activeCount++;
         return p;
       }
@@ -224,6 +226,44 @@ export class ParticleSystem {
   }
 
   /**
+   * 生成雨滴
+   */
+  createRain(cameraPosition) {
+    const particles = [];
+    const count = 3; // 由于在每帧执行，适当控制数量
+
+    for (let i = 0; i < count; i++) {
+      const p = this._acquire();
+      if (!p) break;
+
+      p.mesh.scale.set(0.04, 1.5, 0.04); // 细长雨滴
+      p.mesh.material.color.setHex(0x99aabb);
+      p.mesh.material.opacity = 0.3;
+
+      // 在相机前方大范围生成
+      p.mesh.position.set(
+        cameraPosition.x + (Math.random() - 0.5) * 800,
+        cameraPosition.y + Math.random() * 200 + 50,
+        cameraPosition.z - Math.random() * 600 - 100
+      );
+
+      // 受风力影响的快速下落
+      p.velocity.set(
+        -30 + (Math.random() - 0.5) * 20,
+        -500 - Math.random() * 200,
+        (Math.random() - 0.5) * 20
+      );
+      p.maxLife = 1.0;
+      p.isRain = true;
+      particles.push(p);
+    }
+
+    if (particles.length > 0) {
+      this._effects.push({ particles, type: 'rain' });
+    }
+  }
+
+  /**
    * 每帧更新所有粒子
    */
   update(dt) {
@@ -249,13 +289,20 @@ export class ParticleSystem {
         this._tmpVec.copy(particle.velocity).multiplyScalar(dt);
         particle.mesh.position.add(this._tmpVec);
 
+        // 如果是雨滴且掉落到地平线，立刻消失
+        if (particle.isRain && particle.mesh.position.y < 0) {
+          particle.life = particle.maxLife;
+        }
+
         // 重力
-        if (!particle.isFlash) {
+        if (!particle.isFlash && !particle.isRain) {
           particle.velocity.y -= 30 * dt;
         }
 
         // 减速
-        particle.velocity.multiplyScalar(1 - 2 * dt);
+        if (!particle.isRain) {
+          particle.velocity.multiplyScalar(1 - 2 * dt);
+        }
 
         // 淡出
         particle.mesh.material.opacity = 1 - progress;

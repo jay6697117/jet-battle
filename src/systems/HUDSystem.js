@@ -18,6 +18,8 @@ export class HUDSystem {
       altitude: document.getElementById('hud-altitude'),
       throttle: document.getElementById('hud-throttle'),
       wave: document.getElementById('hud-wave'),
+      timeValue: document.getElementById('hud-time'),
+      weatherIcon: document.getElementById('hud-weather'),
       missiles: document.getElementById('hud-missiles'),
       flares: document.getElementById('hud-flares'),
       enemies: document.getElementById('hud-enemies'),
@@ -40,6 +42,8 @@ export class HUDSystem {
       altitude: -1,
       throttle: -1,
       wave: -1,
+      timeStr: '',
+      weatherIcon: '',
       missiles: -1,
       flares: -1,
       enemies: -1,
@@ -63,7 +67,7 @@ export class HUDSystem {
   /**
    * 每帧更新
    */
-  update(dt, waveSystem, powerUpSystem) {
+  update(dt, waveSystem, powerUpSystem, timeWeatherSystem) {
     const p = this.player;
     const els = this.els;
     const c = this._cache;
@@ -103,6 +107,30 @@ export class HUDSystem {
       if (c.wave !== w) {
         c.wave = w;
         els.wave.textContent = w;
+      }
+    }
+
+    // 时间与天气
+    if (els.timeValue && timeWeatherSystem) {
+      const h = Math.floor(timeWeatherSystem.gameHour);
+      const m = Math.floor((timeWeatherSystem.gameHour - h) * 60);
+      const tStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+      if (c.timeStr !== tStr) {
+        c.timeStr = tStr;
+        els.timeValue.textContent = tStr;
+      }
+
+      let wIcon = '☀️';
+      if (timeWeatherSystem.weather === 'rain') {
+        wIcon = '🌧️';
+      } else if (timeWeatherSystem.gameHour >= 17 && timeWeatherSystem.gameHour < 19.5) {
+        wIcon = '🌅';
+      } else if (timeWeatherSystem.gameHour >= 19.5 || timeWeatherSystem.gameHour < 6) {
+        wIcon = '🌙';
+      }
+      if (c.weatherIcon !== wIcon) {
+        c.weatherIcon = wIcon;
+        els.weatherIcon.textContent = wIcon;
       }
     }
 

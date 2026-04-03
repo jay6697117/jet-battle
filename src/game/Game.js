@@ -2,6 +2,13 @@ import * as THREE from 'three';
 import { CONFIG } from '../utils/Config.js';
 import { World } from './World.js';
 import { lerp } from '../utils/MathUtils.js';
+import { TimeWeatherSystem } from '../systems/TimeWeatherSystem.js';
+
+// 引入后期处理必需的库
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 /**
  * 游戏主循环
@@ -30,6 +37,7 @@ export class Game {
     this._initCamera();
     this._initScene();
     this._initWorld();
+    this._initComposer();
     this._initResize();
   }
 
@@ -40,7 +48,7 @@ export class Game {
     const quality = CONFIG.quality.high; // 默认高画质
 
     this.renderer = new THREE.WebGLRenderer({
-      antialias: quality.antialias,
+      antialias: false, // 后期处理的抗锯齿由 WebGLRenderTarget 的 samples 接管
       powerPreference: 'high-performance',
       logarithmicDepthBuffer: true, // 对数深度缓冲，解决远距离 Z-fighting
     });
@@ -89,6 +97,35 @@ export class Game {
    */
   _initWorld() {
     this.world = new World(this.scene);
+    this.timeWeatherSystem = new TimeWeatherSystem(this.world);
+    this.addSystem(this.timeWeatherSystem);
+  }
+
+  /**
+   * 初始化后期处理 (EffectComposer)
+   */
+  _initComposer() {
+    // 强制开启多重采样（MSAA），解决后处理带来的锯齿问题（需要硬件支持，现代几乎都支持）
+    const renderTarget = new THREE.WebGLRenderTarget(window.innerWidth, window.innerHeight, {
+      type: THREE.HalfFloatType,
+      format: THREE.RGBAFormat,
+      samples: 4, // 4倍抗锯齿
+    });
+
+    this.composer = new EffectComposer(this.renderer, renderTarget);
+
+    // 1. 基础渲染通道
+    const renderPass = new RenderPass(this.scene, this.camera);
+    this.composer.addPass(renderPass);
+
+    // 2. 泛光滤镜 (Bloom)，让爆炸和反光极其绚丽
+    // 参数：分辨率，发光强度(strength)，发光半径(radius)，发光阈值(threshold)
+    const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 0.7, 0.6, 0.6);
+    this.composer.addPass(bloomPass);
+
+    // 3. 输出通道 (自动应用 toneMapping 和 color space)
+    const outputPass = new OutputPass();
+    this.composer.addPass(outputPass);
   }
 
   /**
@@ -103,6 +140,9 @@ export class Game {
       this.camera.updateProjectionMatrix();
 
       this.renderer.setSize(width, height);
+      if (this.composer) {
+        this.composer.setSize(width, height);
+      }
     });
   }
 
@@ -197,8 +237,8 @@ export class Game {
       this.camera.updateProjectionMatrix();
     }
 
-    // 渲染
-    this.renderer.render(this.scene, this.camera);
+    // 渲染 (使用 composer 而不是 renderer)
+    this.composer.render();
   }
 
   /**

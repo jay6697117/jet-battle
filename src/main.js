@@ -352,7 +352,7 @@ function startGame() {
       cameraSystem.update(dt);
 
       // 10. HUD 更新
-      hudSystem.update(dt, waveSystem, powerUpSystem);
+      hudSystem.update(dt, waveSystem, powerUpSystem, game.timeWeatherSystem);
 
       // 11. 雷达更新
       radarSystem.update(dt);
@@ -366,6 +366,11 @@ function startGame() {
 
       // 14. 波次系统更新
       waveSystem.update(dt);
+
+      // 14.5 天气降落更新
+      if (game.timeWeatherSystem && game.timeWeatherSystem.weather === 'rain') {
+        particleSystem.createRain(game.camera.position);
+      }
 
       // 15. 调试面板更新
       debugPanel.update(dt);

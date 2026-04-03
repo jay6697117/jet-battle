@@ -111,10 +111,18 @@ export class World {
         varying vec3 vWorldPos;
 
         void main() {
-          // 简单的漫反射光照
+          // diffuse light
           float diffuse = max(dot(vNormal, uSunDir), 0.0);
-          vec3 light = uAmbientColor * 0.5 + uSunColor * diffuse * 0.6;
-          vec3 finalColor = uColor * light;
+
+          // Specular highlights (波光粼粼夕阳反射)
+          vec3 viewDir = normalize(cameraPosition - vWorldPos);
+          vec3 reflectDir = reflect(-uSunDir, vNormal);
+          float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100.0);
+
+          vec3 light = uAmbientColor * 0.4 + uSunColor * diffuse * 0.5;
+          vec3 specularLight = uSunColor * spec * 3.0; // 配合Bloom能发光
+
+          vec3 finalColor = uColor * light + specularLight;
 
           gl_FragColor = vec4(finalColor, uOpacity);
         }
@@ -139,6 +147,7 @@ export class World {
     // 环境光
     const ambient = new THREE.AmbientLight(0x8899bb, 0.5);
     this.scene.add(ambient);
+    this.ambientLight = ambient;
 
     // 方向光（太阳）
     const sunLight = new THREE.DirectionalLight(0xffffee, 1.2);
@@ -158,6 +167,7 @@ export class World {
     // 半球光（天空-地面颜色过渡）
     const hemiLight = new THREE.HemisphereLight(0x87CEEB, 0x2d5016, 0.4);
     this.scene.add(hemiLight);
+    this.hemiLight = hemiLight;
   }
 
   /**
