@@ -8,7 +8,7 @@ import en from './en.js';
 class I18nManager {
   constructor() {
     this._locales = { zh, en };
-    this._locale = 'zh'; // 默认中文
+    this._locale = 'en'; // 默认英文
     this._listeners = [];
 
     // 从 localStorage 恢复语言偏好
