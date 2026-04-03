@@ -67,6 +67,7 @@ function init() {
 
   // 创建设置管理器
   settingsManager = new SettingsManager(game, audioManager);
+  settingsManager.onRestart = performRespawn;
 
   // 先启动渲染循环显示背景场景
   game.start();
@@ -281,9 +282,8 @@ function startGame() {
   // 注册更新循环
   game.addSystem({
     update(dt, elapsed) {
-      // 1. 更新输入状态
+      // 1. 更新输入状态（注意：touchInput.update() 移至帧末尾，避免提前重置单次触发标志）
       keyboard.update();
-      if (touchInput) touchInput.update();
 
       // 2. 飞行物理
       flightPhysics.update(dt);
@@ -348,10 +348,37 @@ function startGame() {
 
       // 17. 快捷键处理
       handleHotkeys();
+
+      // 18. 重置触摸单次触发标志（必须在所有消费者之后）
+      if (touchInput) touchInput.update();
     }
   });
 
   console.log('[Jet Battle] 游戏启动！按 WASD 控制飞行。');
+}
+
+/**
+ * 处理重新开始逻辑
+ */
+function performRespawn() {
+  if (!player) return;
+  player.respawn();
+  gameState.respawn();
+  game.timeScale = 1.0; // 恢复正常速度
+  // 清除所有 buff
+  if (powerUpSystem) powerUpSystem.clearAllBuffs();
+  if (screenEffects) {
+    screenEffects.showRespawn();
+    screenEffects.hideLevelResult();
+  }
+  // 隐藏移动端重生按钮
+  if (touchInput && touchInput.isMobile) {
+    touchInput.showRespawn(false);
+  }
+  // 重试当前关卡
+  if (waveSystem) {
+    waveSystem.retryLevel();
+  }
 }
 
 /**
@@ -361,26 +388,7 @@ function handleHotkeys() {
   // R 键重试本关（键盘或触摸重生按钮）
   const wantRespawn = (keyboard.isJustPressed('KeyR') || (touchInput && touchInput.isRespawning)) && player;
   if (wantRespawn) {
-    player.respawn();
-    gameState.respawn();
-    game.timeScale = 1.0; // 恢复正常速度
-    // 清除所有 buff
-    if (powerUpSystem) powerUpSystem.clearAllBuffs();
-    if (screenEffects) {
-      screenEffects.showRespawn();
-      screenEffects.hideLevelResult();
-    }
-    // 隐藏移动端重生按钮
-    if (touchInput && touchInput.isMobile) {
-      touchInput.showRespawn(false);
-    }
-    // 重试当前关卡
-    if (waveSystem) {
-      const info = waveSystem.getInfo();
-      if (info.levelState === 'failed' || !gameState.isAlive) {
-        waveSystem.retryLevel();
-      }
-    }
+    performRespawn();
   }
 
   // G 键切换自动导航模式（键盘或双击雷达）

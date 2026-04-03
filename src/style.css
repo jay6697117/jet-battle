@@ -792,6 +792,7 @@ body > canvas {
   padding: 6px 12px;
   border-bottom: 1px solid rgba(0, 255, 136, 0.2);
   text-align: left;
+  white-space: nowrap;
 }
 
 .leaderboard-table td {
@@ -800,6 +801,7 @@ body > canvas {
   padding: 6px 12px;
   color: rgba(255, 255, 255, 0.8);
   border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
 }
 
 .leaderboard-table tr.player-row {
@@ -1026,10 +1028,10 @@ body > canvas {
 
 #mobile-fire {
   position: fixed;
-  bottom: 100px;
+  bottom: 60px;
   right: 30px;
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   border-radius: 50%;
   background: rgba(255, 50, 50, 0.3);
   border: 2px solid rgba(255, 50, 50, 0.6);
@@ -1038,7 +1040,7 @@ body > canvas {
   align-items: center;
   justify-content: center;
   font-family: 'Orbitron', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
   letter-spacing: 2px;
   color: rgba(255, 100, 100, 0.8);
   pointer-events: all;
@@ -1072,15 +1074,16 @@ body > canvas {
 
   #hud-bottom-left {
     width: 160px;
-    bottom: 180px;
+    bottom: 260px;
   }
 
   .hud-value { font-size: 22px; }
 
   #hud-radar {
-    width: 140px;
-    height: 140px;
-    bottom: 180px;
+    width: 130px;
+    height: 130px;
+    bottom: 260px;
+    right: 20px;
   }
 
   #hud-bottom-center { bottom: 10px; }
@@ -1254,8 +1257,8 @@ body.is-mobile .close-hint-mobile {
 /* 导弹按钮（开火按钮上方） */
 #mobile-missile {
   position: fixed;
-  bottom: 200px;
-  right: 35px;
+  bottom: 165px;
+  right: 40px;
   width: 70px;
   height: 70px;
   border-radius: 50%;
@@ -1275,6 +1278,34 @@ body.is-mobile .close-hint-mobile {
   background: rgba(50, 120, 255, 0.55);
   border-color: rgba(120, 180, 255, 0.9);
   box-shadow: 0 0 25px rgba(50, 120, 255, 0.5);
+  transform: scale(0.92);
+}
+
+/* 干扰弹按钮（开火按钮左上） */
+#mobile-flare {
+  position: fixed;
+  bottom: 120px;
+  right: 130px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 200, 50, 0.25);
+  border: 2px solid rgba(255, 200, 50, 0.6);
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #fff;
+  pointer-events: all;
+  box-shadow: 0 0 15px rgba(255, 200, 50, 0.2);
+  transition: all 0.15s ease;
+}
+
+#mobile-flare.active {
+  background: rgba(255, 200, 50, 0.55);
+  border-color: rgba(255, 220, 100, 0.9);
+  box-shadow: 0 0 25px rgba(255, 200, 50, 0.5);
   transform: scale(0.92);
 }
 
@@ -1389,11 +1420,11 @@ body.is-mobile .close-hint-mobile {
 @media (max-width: 768px) {
   /* 导弹按钮移动端微调 */
   #mobile-missile {
-    bottom: 190px;
-    right: 30px;
-    width: 65px;
-    height: 65px;
-    font-size: 24px;
+    bottom: 165px;
+    right: 40px;
+    width: 70px;
+    height: 70px;
+    font-size: 28px;
   }
 
   /* HUD 左上角可点击提示 */
@@ -1404,6 +1435,11 @@ body.is-mobile .close-hint-mobile {
 
   /* HUD 底部栏可滑动提示 */
   body.is-mobile #hud-bottom-center {
+    pointer-events: all;
+  }
+
+  /* 雷达可点击（双击自动导航） */
+  body.is-mobile #hud-radar {
     pointer-events: all;
   }
 

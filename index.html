@@ -86,7 +86,7 @@
           <h3>战斗操作</h3>
           <div class="control-row"><span class="key gesture-key">🔴</span><span>开火按钮 机枪</span></div>
           <div class="control-row"><span class="key gesture-key">🔵</span><span>导弹按钮 发射</span></div>
-          <div class="control-row"><span class="key gesture-key">✌️</span><span>双指点击 干扰弹</span></div>
+          <div class="control-row"><span class="key gesture-key">✦</span><span>黄星按钮 干扰弹</span></div>
           <h3>辅助功能</h3>
           <div class="control-row"><span class="key gesture-key">👆👆</span><span>双击雷达 导航</span></div>
           <div class="control-row"><span class="key gesture-key">👊</span><span>长按摇杆 稳定</span></div>
@@ -216,20 +216,23 @@
     <div id="leaderboard-overlay" style="display:none;">
       <div class="leaderboard-panel">
         <h2 class="leaderboard-title">排行榜</h2>
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>排名</th>
-              <th>飞行员</th>
-              <th>击杀</th>
-              <th>阵亡</th>
-              <th>战损比</th>
-              <th>存活时间</th>
-            </tr>
-          </thead>
-          <tbody id="leaderboard-body">
-          </tbody>
-        </table>
+        <div class="leaderboard-table-wrapper" style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>排名</th>
+                <th>飞行员</th>
+                <th>击杀</th>
+                <th>阵亡</th>
+                <th>战损比</th>
+                <th>存活时间</th>
+              </tr>
+            </thead>
+            <tbody id="leaderboard-body">
+            </tbody>
+          </table>
+        </div>
+        <button id="leaderboard-close" class="settings-btn close-btn">关闭排行榜</button>
       </div>
     </div>
 
@@ -252,6 +255,9 @@
         <div class="settings-group">
           <label class="settings-label">音效</label>
           <button id="settings-sound" class="settings-btn toggle-btn active">开启</button>
+        </div>
+        <div class="settings-group" style="margin-top: 24px;">
+          <button id="settings-restart" class="settings-btn" style="width: 100%; color: #ff3333; border-color: rgba(255, 50, 50, 0.4); background: rgba(255, 50, 50, 0.1);">重新开始比赛</button>
         </div>
         <button id="settings-close" class="settings-btn close-btn">关闭设置 (ESC)</button>
       </div>
@@ -282,6 +288,7 @@
       <div class="throttle-label">油门</div>
     </div>
     <div id="mobile-missile" style="display:none;">🚀</div>
+    <div id="mobile-flare" style="display:none;">✦</div>
     <div id="mobile-fire" style="display:none;">开火</div>
 
     <!-- 移动端死亡重生按钮 -->

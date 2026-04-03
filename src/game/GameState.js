@@ -13,6 +13,18 @@ export class GameState {
 
     // 从 localStorage 加载历史记录
     this._history = this._loadHistory();
+
+    // 绑定关闭排行榜按钮
+    const closeLeaderboardBtn = document.getElementById('leaderboard-close');
+    if (closeLeaderboardBtn) {
+      closeLeaderboardBtn.addEventListener('click', () => {
+        this._leaderboardVisible = false;
+        const overlay = document.getElementById('leaderboard-overlay');
+        if (overlay) {
+          overlay.style.display = 'none';
+        }
+      });
+    }
   }
 
   /**

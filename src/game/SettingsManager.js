@@ -12,7 +12,7 @@ export class SettingsManager {
     this.settings = {
       quality: 'high',
       soundEnabled: true,
-      invertY: false,
+      invertY: true,
     };
 
     // 从 localStorage 恢复
@@ -65,6 +65,15 @@ export class SettingsManager {
         }
         this._updateUI();
         this._saveSettings();
+      });
+    }
+
+    // 重新开始按钮
+    const restartBtn = document.getElementById('settings-restart');
+    if (restartBtn) {
+      restartBtn.addEventListener('click', () => {
+        this.close();
+        if (this.onRestart) this.onRestart();
       });
     }
 

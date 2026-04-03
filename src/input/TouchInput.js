@@ -73,6 +73,7 @@ export class TouchInput {
     this._setupThrottle();
     this._setupFireButton();
     this._setupMissileButton();
+    this._setupFlareButton();
     this._setupFlareGesture();
     this._setupRadarDoubleTap();
     this._setupSwipeUpGesture();
@@ -86,7 +87,7 @@ export class TouchInput {
    * 显示移动端 UI
    */
   _showMobileUI() {
-    const els = ['mobile-joystick', 'mobile-throttle', 'mobile-fire', 'mobile-missile'];
+    const els = ['mobile-joystick', 'mobile-throttle', 'mobile-fire', 'mobile-missile', 'mobile-flare'];
     for (const id of els) {
       const el = document.getElementById(id);
       if (el) el.style.display = 'block';
@@ -284,6 +285,29 @@ export class TouchInput {
 
     missileBtn.addEventListener('touchcancel', () => {
       missileBtn.classList.remove('active');
+    });
+  }
+
+  /**
+   * 设置干扰弹按钮（单次触发）
+   */
+  _setupFlareButton() {
+    const flareBtn = document.getElementById('mobile-flare');
+    if (!flareBtn) return;
+
+    flareBtn.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      this.isFlareReleasing = true;
+      flareBtn.classList.add('active');
+    });
+
+    flareBtn.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      flareBtn.classList.remove('active');
+    });
+
+    flareBtn.addEventListener('touchcancel', () => {
+      flareBtn.classList.remove('active');
     });
   }
 
