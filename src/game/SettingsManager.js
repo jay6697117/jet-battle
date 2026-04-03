@@ -68,6 +68,16 @@ export class SettingsManager {
       });
     }
 
+    // 操控说明帮助按钮
+    const helpBtn = document.getElementById('settings-help');
+    if (helpBtn) {
+      helpBtn.addEventListener('click', () => {
+        this.close();
+        const instructionsPanel = document.getElementById('instructions-panel');
+        if (instructionsPanel) instructionsPanel.style.display = 'block';
+      });
+    }
+
     // 重新开始按钮
     const restartBtn = document.getElementById('settings-restart');
     if (restartBtn) {

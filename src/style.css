@@ -87,6 +87,58 @@ body > canvas {
   100% { transform: perspective(800px) rotateX(65deg) translateY(50px); }
 }
 
+/* 战机巡航动画特效 */
+.jet-animation {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  z-index: 5;
+  pointer-events: none;
+  filter: drop-shadow(0 0 15px rgba(0, 255, 136, 0.4));
+  opacity: 0;
+}
+
+#jet-1 {
+  width: 120px;
+  height: 120px;
+  animation: flyRight 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+#jet-2 {
+  width: 60px;
+  height: 60px;
+  animation: flyDiagonal 14s linear infinite;
+  animation-delay: 3s;
+}
+
+#jet-3 {
+  width: 90px;
+  height: 90px;
+  animation: flyLeft 18s ease-in-out infinite;
+  animation-delay: 6s;
+}
+
+@keyframes flyRight {
+  0% { transform: translate(-30vw, 20vh) rotate(90deg) scale(0.6); opacity: 0; }
+  10% { opacity: 0.6; }
+  80% { opacity: 0.6; }
+  100% { transform: translate(130vw, 20vh) rotate(90deg) scale(1.2); opacity: 0; }
+}
+
+@keyframes flyDiagonal {
+  0% { transform: translate(-30vw, 130vh) rotate(35deg) scale(0.8); opacity: 0; }
+  15% { opacity: 0.8; }
+  85% { opacity: 0.8; }
+  100% { transform: translate(130vw, -30vh) rotate(35deg) scale(0.4); opacity: 0; }
+}
+
+@keyframes flyLeft {
+  0% { transform: translate(130vw, 70vh) rotate(-90deg) scale(1); opacity: 0; }
+  20% { opacity: 0.3; }
+  80% { opacity: 0.3; }
+  100% { transform: translate(-30vw, 70vh) rotate(-90deg) scale(0.7); opacity: 0; }
+}
+
 /* 中央菜单面板 HUD 风格外框 */
 .menu-content {
   position: relative;
@@ -123,16 +175,52 @@ body > canvas {
   line-height: 1.2;
   color: #fff;
   text-shadow:
-    0 0 15px rgba(0, 255, 136, 0.6),
-    0 0 30px rgba(0, 255, 136, 0.4),
-    0 0 60px rgba(0, 255, 136, 0.2);
+    0 0 10px rgba(0, 255, 136, 0.8),
+    0 0 20px rgba(0, 255, 136, 0.8),
+    0 0 40px rgba(0, 255, 136, 0.6),
+    0 0 80px rgba(0, 255, 136, 0.3);
   margin-bottom: 12px;
-  animation: titlePulse 4s ease-in-out infinite alternate;
+  position: relative;
+  display: inline-block;
+  animation: neonFlicker 4s infinite alternate, titleGlitchSkew 5s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
 }
 
-@keyframes titlePulse {
-  0% { text-shadow: 0 0 15px rgba(0, 255, 136, 0.6), 0 0 30px rgba(0, 255, 136, 0.3); }
-  100% { text-shadow: 0 0 25px rgba(0, 255, 136, 0.8), 0 0 50px rgba(0, 255, 136, 0.5), 0 0 80px rgba(0, 255, 136, 0.3); }
+@keyframes neonFlicker {
+  0%, 100% {
+    text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 40px rgba(0, 255, 136, 0.8), 0 0 80px rgba(0, 255, 136, 0.4);
+    opacity: 1;
+  }
+  15% {
+    text-shadow: 0 0 5px #00ff88, 0 0 10px rgba(0, 255, 136, 0.6);
+    opacity: 0.9;
+  }
+  16% {
+    text-shadow: 0 0 15px #00ff88, 0 0 30px rgba(0, 255, 136, 0.8), 0 0 60px rgba(0, 255, 136, 0.5);
+    opacity: 1;
+  }
+  50% {
+    text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 40px rgba(0, 255, 136, 0.8), 0 0 80px rgba(0, 255, 136, 0.4);
+    opacity: 1;
+  }
+  51% {
+    text-shadow: none;
+    opacity: 0.7;
+  }
+  52% {
+    text-shadow: -4px 0 #ff00c1, 4px 0 #00fff9, 0 0 15px #00ff88;
+    opacity: 0.9;
+  }
+  53% {
+    text-shadow: 0 0 10px #00ff88, 0 0 20px #00ff88, 0 0 40px rgba(0, 255, 136, 0.8), 0 0 80px rgba(0, 255, 136, 0.4);
+    opacity: 1;
+  }
+}
+
+@keyframes titleGlitchSkew {
+  0%, 48%, 52%, 100% { transform: skewX(0deg) translate(0); }
+  49% { transform: skewX(-10deg) translate(-2px, 1px); }
+  50% { transform: skewX(10deg) translate(2px, -1px); }
+  51% { transform: skewX(0deg) translate(0); }
 }
 
 .menu-subtitle {

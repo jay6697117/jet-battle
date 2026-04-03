@@ -16,6 +16,17 @@
     <div id="main-menu">
       <div class="menu-bg-scanlines"></div>
       <div class="menu-bg-grid"></div>
+
+      <!-- 战机巡航动画 -->
+      <div class="jet-animation" id="jet-1">
+        <svg viewBox="0 0 100 100" fill="rgba(0, 255, 136, 0.4)"><polygon points="50,5 55,25 70,45 95,65 95,70 70,60 60,85 75,95 75,100 50,90 25,100 25,95 40,85 30,60 5,70 5,65 30,45 45,25" /></svg>
+      </div>
+      <div class="jet-animation" id="jet-2">
+        <svg viewBox="0 0 100 100" fill="rgba(0, 255, 136, 0.6)"><polygon points="50,5 55,25 70,45 95,65 95,70 70,60 60,85 75,95 75,100 50,90 25,100 25,95 40,85 30,60 5,70 5,65 30,45 45,25" /></svg>
+      </div>
+      <div class="jet-animation" id="jet-3">
+        <svg viewBox="0 0 100 100" fill="rgba(0, 255, 136, 0.3)"><polygon points="50,5 55,25 70,45 95,65 95,70 70,60 60,85 75,95 75,100 50,90 25,100 25,95 40,85 30,60 5,70 5,65 30,45 45,25" /></svg>
+      </div>
       <div class="menu-content">
         <h1 class="menu-title" data-text="德黑兰的反击">德黑兰的<br>反击</h1>
         <p class="menu-subtitle">[ SYSTEM ONLINE / 现代空战 ]</p>
@@ -27,10 +38,10 @@
           </button>
         </div>
         <div class="menu-footer menu-footer-desktop">
-          <span>WASD 飞行 | ←→ 滚转 | ↑↓ 油门 | Space 射击 | E 导弹</span>
+          <span>WASD 飞行 | ←→ 滚转 | ↑↓ 油门 | Space 射击 | E 导弹 | H 帮助</span>
         </div>
         <div class="menu-footer menu-footer-mobile">
-          <span>摇杆飞行 | 滑杆油门 | 点击射击和发射导弹</span>
+          <span>摇杆飞行 | 滑杆油门 | 点击射击和发射导弹 | 设置中查看帮助</span>
         </div>
       </div>
     </div>
@@ -54,7 +65,7 @@
           <h3>油门控制</h3>
           <div class="control-row"><span class="key">↑</span><span>加速（油门+1档）</span></div>
           <div class="control-row"><span class="key">↓</span><span>减速（油门-1档）</span></div>
-          <div class="control-row"><span class="key">Shift</span><span>Boost 加速</span></div>
+          <div class="control-row"><span class="key">Shift</span><span>增强加速</span></div>
         </div>
         <!-- 右列 -->
         <div class="controls-column">
@@ -68,6 +79,7 @@
           <div class="control-row"><span class="key">N</span><span>生成敌机</span></div>
           <div class="control-row"><span class="key">R</span><span>重生</span></div>
           <div class="control-row"><span class="key">Tab</span><span>排行榜</span></div>
+          <div class="control-row"><span class="key">H</span><span>操控说明</span></div>
           <div class="control-row"><span class="key">ESC</span><span>设置菜单</span></div>
           <div class="control-row"><span class="key">F3</span><span>调试面板</span></div>
         </div>
@@ -259,6 +271,7 @@
           <button id="settings-sound" class="settings-btn toggle-btn active">开启</button>
         </div>
         <div class="settings-group" style="margin-top: 24px;">
+          <button id="settings-help" class="settings-btn" style="width: 100%; margin-bottom: 12px; border-color: rgba(0, 255, 136, 0.4); color: #00ff88; background: rgba(0, 255, 136, 0.1);">操控说明 (H)</button>
           <button id="settings-restart" class="settings-btn" style="width: 100%; color: #ff3333; border-color: rgba(255, 50, 50, 0.4); background: rgba(255, 50, 50, 0.1);">重新开始比赛</button>
         </div>
         <button id="settings-close" class="settings-btn close-btn">关闭设置 (ESC)</button>

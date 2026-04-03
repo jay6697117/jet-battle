@@ -122,6 +122,8 @@ function setupMainMenu() {
     }
     // 任意键关闭
     const onKeyClose = (e) => {
+      // 排除 H 键，使其可走完整的 toggle 逻辑
+      if (e.code === 'KeyH') return;
       if (instructionsPanel.style.display !== 'none') {
         closePanel();
       }
@@ -389,6 +391,18 @@ function handleHotkeys() {
   const wantRespawn = (keyboard.isJustPressed('KeyR') || (touchInput && touchInput.isRespawning)) && player;
   if (wantRespawn) {
     performRespawn();
+  }
+
+  // H 键切换操控说明
+  if (keyboard.isJustPressed('KeyH')) {
+    const panel = document.getElementById('instructions-panel');
+    if (panel) {
+      if (panel.style.display === 'none') {
+        panel.style.display = 'block';
+      } else {
+        panel.style.display = 'none';
+      }
+    }
   }
 
   // G 键切换自动导航模式（键盘或双击雷达）
